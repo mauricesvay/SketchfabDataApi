@@ -1,0 +1,19 @@
+{
+  "name": "sketchfab-data-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "author": "Sketchfab",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "swagger-client": "^2.1.23"
+  },
+  "devDependencies": {
+    "json-loader": "^0.5.4",
+    "webpack": "^1.13.2"
+  }
+}

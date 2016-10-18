@@ -1,0 +1,3697 @@
+{
+    "info": {
+        "version": "3.0.0",
+        "title": "Sketchfab API"
+    },
+    "paths": {
+        "/v3/me/subscriptions/{uid}": {
+            "delete": {
+                "responses": {
+                    "204": {
+                        "description": "Successful delete"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "collections"
+                ],
+                "description": "delete a subscription"
+            }
+        },
+        "/v3/users": {
+            "get": {
+                "description": "Users endpoint for sketchfab api",
+                "tags": [
+                    "users"
+                ],
+                "responses": {
+                    "200": {
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "response": {
+                                    "count": 24,
+                                    "next": "api.sketchfab.com/v3/users/cursor=azerty'",
+                                    "results": [
+                                        {
+                                            "website": "http://mightypirate.com",
+                                            "subscriptionCount": 4,
+                                            "followerCount": 2,
+                                            "uid": "a6a996ed17c343c58568984c9aa0eaf8",
+                                            "modelsUrl": "https://api.sketchfab.com/v3/models?user=black.elm",
+                                            "portfolioUrl": null,
+                                            "likeCount": 6, 
+                                            "facebookUsername": "migthtypirate",
+                                            "biography": "I am a mighty pirate",
+                                            "city": "Toronto",
+                                            "account": "free",
+                                            "displayName": "black.elm",
+                                            "profileUrl": "https://sketchfab.com/black.elm",
+                                            "followingsUrl": "https://api.sketchfab.com/v3/users/followings/black.elm",
+                                            "skills": [
+                                                {
+                                                    "name": "IronCAD",
+                                                    "uri": "https://api.sketchfab.com/v3/skills/ironcad"
+                                                },
+                                                {
+                                                    "name": "Lightwave 3D",
+                                                    "uri": "https://api.sketchfab.com/v3/skills/lightwave-3d"
+                                                }
+                                            ],
+                                            "tagline": "I'm a mighty pirate!",
+                                            "uri": "https://api.sketchfab.com/v3/users/a6a996ed17c343c58568984c9aa0eaf8",
+                                            "dateJoined": "2015-08-20T12:23:00.135222",
+                                            "modelCount": 0,
+                                            "username": "black.elm",
+                                            "linkedinUsername": "black.elm",
+                                            "likesUrl": "https://api.sketchfab.com/v3/models?liked_by=black.elm",
+                                            "followersUrl": "https://api.sketchfab.com/v3/users/followers/black.elm",
+                                            "collectionCount": 5,
+                                            "country": "Canada",
+                                            "followingCount": 0,
+                                            "twitterUsername": "black.elm",
+                                            "collectionsUrl": "https://api.sketchfab.com/v3/collections?by=black.elm",
+                                            "avatar": {
+                                                "images": null,
+                                                "updatedAt": "2016-04-05T08:55:27.489627",
+                                                "name": "avatar-gray",
+                                                "createdAt": "2016-04-05T08:55:27.489627",
+                                                "uri": "https://api.sketchfab.com/v3/avatars/3ef1bd11d3eb4b57a0b353e8f2e5fc3e"
+                                            }
+                                        }
+                                    ],
+                                    "previous": null
+                                }
+                            }
+                        },
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "used for pagination",
+                        "in": "query",
+                        "name": "cursor"
+                    },
+                    {
+                        "required": false,
+                        "type": "integer",
+                        "description": "pagination size. max 24",
+                        "in": "query",
+                        "name": "count"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either dateJoined, -dateJoined, followerCount, -followerCount",
+                        "in": "query",
+                        "name": "sort_by"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "search users by location",
+                        "in": "query",
+                        "name": "location"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "search users by account type (free or pro)",
+                        "in": "query",
+                        "name": "account"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/search?type=collections": {
+            "get": {
+                "tags": [
+                    "search",
+                    "collections"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Collections matching the search",
+                        "schema": {
+                            "$ref": "#/definitions/CollectionSearchResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "username of the owner",
+                        "in": "query",
+                        "name": "user"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either createdAt, -createdAt",
+                        "in": "query",
+                        "name": "sort_by"
+                    }
+                ],
+                "description": "Search in collections"
+            }
+        },
+        "/v3/avatars/{uid}": {
+            "get": {
+                "description": "returns a user avatar",
+                "tags": [
+                    "avatars",
+                    "users"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/AvatarRelated"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/me/environments/{uid}": {
+            "patch": {
+                "responses": {
+                    "204": {
+                        "description": "Sucessfull update"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    },
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "name",
+                        "in": "formData"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "environment"
+                ],
+                "description": "Update an environment. You need to have a pro account and you cannot update default environments\n"
+            },
+            "delete": {
+                "responses": {
+                    "204": {
+                        "description": "Sucessfull deletion"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "environment"
+                ],
+                "description": "Delete an environment. You need to have a pro account to perform this action. Default environments cannot be deleted\n"
+            }
+        },
+        "/v3/collections": {
+            "post": {
+                "responses": {
+                    "201": {
+                        "description": "Successful create"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "in": "body",
+                        "description": "collection definition",
+                        "name": "collection",
+                        "schema": {
+                            "$ref": "#/definitions/CollectionPost"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "collections"
+                ],
+                "description": "Create a collection"
+            },
+            "get": {
+                "description": "Return list of collections",
+                "tags": [
+                    "collections"
+                ],
+                "responses": {
+                    "200": {
+                        "schema": {
+                            "$ref": "#/definitions/CollectionResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "response": {
+                                    "count": 24,
+                                    "next": "api.sketchfab.com/v3/collections/count=24&offset=24'",
+                                    "results": [
+                                        {
+                                            "name": "NSFW",
+                                            "description": null,
+                                            "uri": "https://api.sketchfab.com/v3/collections/14f64dc8402d4394bf35f9789be0890d",
+                                            "modelCount": 0,
+                                            "updatedAt": "2016-04-05T08:56:50.724723",
+                                            "uid": "14f64dc8402d4394bf35f9789be0890d",
+                                            "embedUrl": "https://sketchfab.com/playlists/embed?collection=14f64dc8402d4394bf35f9789be0890d",
+                                            "slug": "nsfw",
+                                            "createdAt": "2016-04-05T08:56:50.593513",
+                                            "thumbnails": {
+                                                "images": [
+                                                    {
+                                                        "url": "https://media.sketchfab.com/thumbnails/2aef175a85994e40b1bd097ba4eb4281/50x50.jpeg",
+                                                        "width": 50,
+                                                        "height": 50,
+                                                        "uid": "fa056d35c8f0472984c08f768bb9ff6e",
+                                                        "size": 344
+                                                    },
+                                                    {
+                                                        "url": "https://media.sketchfab.com/thumbnails/2aef175a85994e40b1bd097ba4eb4281/100x100.jpeg",
+                                                        "width": 100,
+                                                        "height": 100,
+                                                        "uid": "889e815c8e7e45b6ae790c9786b102e8",
+                                                        "size": 600
+                                                    },
+                                                    {
+                                                        "url": "https://media.sketchfab.com/thumbnails/2aef175a85994e40b1bd097ba4eb4281/200x200.jpeg",
+                                                        "width": 200,
+                                                        "height": 200,
+                                                        "uid": "6d44d308ed6e440f86fd5091f7b239e0",
+                                                        "size": 1380
+                                                    },
+                                                    {
+                                                        "url": "https://media.sketchfab.com/thumbnails/2aef175a85994e40b1bd097ba4eb4281/448x252.jpeg",
+                                                        "width": 448,
+                                                        "height": 252,
+                                                        "uid": "d23c2bef322b4f4aaab6cb1762614b0b",
+                                                        "size": 2922
+                                                    }
+                                                ],
+                                                "uri": "https://api.sketchfab.com/v3/thumbnails/2aef175a85994e40b1bd097ba4eb4281"
+                                            }
+                                        }
+                                    ],
+                                    "previous": null
+                                }
+                            }
+                        },
+                        "description": "Successfull result"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "used for pagination",
+                        "in": "query",
+                        "name": "cursor"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "search for collections created by a particular user (username)",
+                        "in": "query",
+                        "name": "user"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "search for collections matching a list of uuids",
+                        "in": "query",
+                        "name": "uuids"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "search for collections created since a date",
+                        "in": "query",
+                        "name": "createdSince"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "number of objects returned per page. Max 24",
+                        "in": "query",
+                        "name": "count"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either createdAt -createdAt, subscriberCount or -subscriberCount",
+                        "in": "query",
+                        "name": "sort_by"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/skills/{slug}": {
+            "get": {
+                "tags": [
+                    "skills"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/SkillDetail"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "slug",
+                        "in": "path"
+                    }
+                ],
+                "description": "get details about a skill"
+            }
+        },
+        "/v3/me": {
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "description": "Return detail of the logged in user",
+                "responses": {
+                    "200": {
+                        "description": "Successfull result",
+                        "schema": {
+                            "$ref": "#/definitions/MeDetail"
+                        }
+                    }
+                },
+                "tags": [
+                    "me",
+                    "users"
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            },
+            "patch": {
+                "responses": {
+                    "204": {
+                        "description": "Sucessfull update"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "in": "body",
+                        "name": "profile",
+                        "schema": {
+                            "$ref": "#/definitions/MePatch"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me"
+                ],
+                "description": "update profile informations"
+            }
+        },
+        "/v3/users/{uid}/followers": {
+            "get": {
+                "description": "Returns users following a particular user",
+                "tags": [
+                    "users",
+                    "relationships"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "used for pagination",
+                        "in": "query",
+                        "name": "cursor"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/me/followings/{uid}": {
+            "delete": {
+                "responses": {
+                    "204": {
+                        "description": "Sucessfull removal"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "users",
+                    "relationships"
+                ],
+                "description": "stop following a user"
+            }
+        },
+        "/v3/models/{uid}": {
+            "put": {
+                "description": "reupload your model",
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "model name",
+                        "in": "formData",
+                        "name": "name"
+                    },
+                    {
+                        "required": false,
+                        "type": "boolean",
+                        "description": "this model should be private? (default false)",
+                        "in": "formData",
+                        "name": "private"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "set a password on the model",
+                        "in": "formData",
+                        "name": "password"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "name of an existing license",
+                        "in": "formData",
+                        "name": "licence"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "comma separated list of tag slugs",
+                        "in": "formData",
+                        "name": "tags"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "comma separated list of categories slug",
+                        "in": "formData",
+                        "name": "categories"
+                    },
+                    {
+                        "required": true,
+                        "type": "file",
+                        "description": "the actual model",
+                        "in": "formData",
+                        "name": "modelFile"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "the model file name",
+                        "in": "formData",
+                        "name": "modelFileName"
+                    },
+                    {
+                        "required": false,
+                        "type": "boolean",
+                        "description": "weither the model is published or not (default true)",
+                        "in": "formData",
+                        "name": "is_published"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "model description",
+                        "in": "formData",
+                        "name": "description"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "models"
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Authentication credentials were not provided or does not match"
+                    }
+                }
+            },
+            "get": {
+                "description": "Returns details about a model.",
+                "tags": [
+                    "models"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/ModelDetail"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            },
+            "patch": {
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Authentication credentials were not provided or does not match"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    },
+                    {
+                        "required": true,
+                        "in": "body",
+                        "description": "model definition",
+                        "name": "model",
+                        "schema": {
+                            "$ref": "#/definitions/ModelPatch"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "models"
+                ],
+                "description": "change some aspect of your model"
+            }
+        },
+        "/v3/search?type=models": {
+            "get": {
+                "tags": [
+                    "search",
+                    "models"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Models matching the search",
+                        "schema": {
+                            "$ref": "#/definitions/ModelSearchResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "username of the owner",
+                        "in": "query",
+                        "name": "user"
+                    },
+                    {
+                        "required": false,
+                        "type": "array",
+                        "description": "tags slugs",
+                        "in": "query",
+                        "name": "tags"
+                    },
+                    {
+                        "required": false,
+                        "type": "array",
+                        "description": "categories slugs",
+                        "in": "query",
+                        "name": "categories"
+                    },
+                    {
+                        "required": false,
+                        "type": "array",
+                        "description": "either pending, processing, succeeded, failed",
+                        "in": "query",
+                        "name": "processing_status"
+                    },
+                    {
+                        "required": false,
+                        "type": "boolean",
+                        "name": "published",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "type": "integer",
+                        "description": "number of days since the model was created",
+                        "in": "query",
+                        "name": "date"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either downloadable, animated",
+                        "in": "query",
+                        "name": "features"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either staffpicked, brands",
+                        "in": "query",
+                        "name": "flag"
+                    },
+                    {
+                        "required": false,
+                        "type": "integer",
+                        "description": "filters out models with less faces",
+                        "in": "query",
+                        "name": "face_count"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "uid of a collection",
+                        "in": "query",
+                        "name": "collection"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either publishedAt, -publishedAt, processedAt or -processedAt",
+                        "in": "query",
+                        "name": "sort_by"
+                    }
+                ],
+                "description": "Search and filters in models"
+            }
+        },
+        "/v3/me/followers": {
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "users",
+                    "relationships"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfull result",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "number of objects returned per page. Max 24",
+                        "in": "query",
+                        "name": "count"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "Either dateJoined, -dateJoined, followerCount or -followerCount",
+                        "in": "query",
+                        "name": "sortBy"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "used for pagination",
+                        "in": "query",
+                        "name": "cursor"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/search": {
+            "get": {
+                "tags": [
+                    "search",
+                    "models",
+                    "users",
+                    "collections"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Models, collections, users matching the search",
+                        "schema": {
+                            "$ref": "#/definitions/GlobalSearchResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
+                "description": "Search in models, collections, users"
+            }
+        },
+        "/v3/users/{uid}": {
+            "get": {
+                "description": "Returns details about a user",
+                "tags": [
+                    "users"
+                ],
+                "responses": {
+                    "200": {
+                        "schema": {
+                            "$ref": "#/definitions/UserDetail"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "response": {
+                                    "website": null,
+                                    "subscriptionCount": 0,
+                                    "followerCount": 0,
+                                    "uid": "53bac75dbbde4525b78f11e07e98c267",
+                                    "modelsUrl": "https://api.sketchfab.com/v3/models??user=bot",
+                                    "likeCount": 0,
+                                    "facebookUsername": null,
+                                    "biography": null,
+                                    "dateJoined": "2016-04-20T11:44:11.084906",
+                                    "city": null,
+                                    "account": "pro",
+                                    "displayName": "bot",
+                                    "profileUrl": "https://sketchfab.com/bot",
+                                    "followingsUrl": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267/followings",
+                                    "skills": [],
+                                    "tagline": null,
+                                    "uri": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267",
+                                    "modelCount": 1,
+                                    "username": "bot",
+                                    "linkedinUsername": null,
+                                    "likesUrl": "https://api.sketchfab.com/v3/models??liked_by=bot",
+                                    "followersUrl": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267/followers",
+                                    "collectionCount": 0,
+                                    "country": null,
+                                    "followingCount": 0,
+                                    "twitterUsername": null,
+                                    "collectionsUrl": "https://api.sketchfab.com/v3/collections??by=bot",
+                                    "avatar": {
+                                        "images": [
+                                            {
+                                                "url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/0f5f69d691a946df94e46f60ef2933cd.jpeg",
+                                                "width": 100,
+                                                "height": 100,
+                                                "size": 3011
+                                            },
+                                            {
+                                                "url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/91587bbdc9f349deab76f26ff440df5f.jpeg",
+                                                "width": 90,
+                                                "height": 90,
+                                                "size": 2657
+                                            },
+                                            {
+                                                "url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/f1919a08fcb04cb29cac88d7c052bbab.jpeg",
+                                                "width": 48,
+                                                "height": 48,
+                                                "size": 1243
+                                            },
+                                            {
+                                                "url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/3a459d2c418240e1afb9b48614e2b61f.jpeg",
+                                                "width": 32,
+                                                "height": 32,
+                                                "size": 776
+                                            }
+                                        ],
+                                        "updatedAt": "2016-04-20T09:42:25.973491",
+                                        "uri": "https://api.sketchfab.com/v3/avatars/7c5b5af6f9174567a0295135a5b8b04f",
+                                        "createdAt": "2016-04-20T09:42:25.973491",
+                                        "name": "avatar-orange.jpg"
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Successful response"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/licences/{uid}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/LicencesDetail"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "description": "get the details of a particular licence available on sketchfab"
+            }
+        },
+        "/v3/models": {
+            "post": {
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "model name",
+                        "in": "formData",
+                        "name": "name"
+                    },
+                    {
+                        "required": false,
+                        "type": "boolean",
+                        "description": "this model should be private? (default false)",
+                        "in": "formData",
+                        "name": "private"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "set a password on the model",
+                        "in": "formData",
+                        "name": "password"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "name of an existing license",
+                        "in": "formData",
+                        "name": "licence"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "comma separated list of tag slugs",
+                        "in": "formData",
+                        "name": "tags"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "comma separated list of categories slug",
+                        "in": "formData",
+                        "name": "categories"
+                    },
+                    {
+                        "required": true,
+                        "type": "file",
+                        "description": "the actual model",
+                        "in": "formData",
+                        "name": "modelFile"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "the model file name",
+                        "in": "formData",
+                        "name": "modelFileName"
+                    },
+                    {
+                        "required": false,
+                        "type": "boolean",
+                        "description": "weither the model is published or not (default true)",
+                        "in": "formData",
+                        "name": "is_published"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "model description",
+                        "in": "formData",
+                        "name": "description"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "json describing the options to use for the model. See \"/v3/models/{uid}/options\" endpoint.\n",
+                        "in": "formData",
+                        "name": "options"
+                    }
+                ],
+                "tags": [
+                    "models"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "description": "Upload a new model to the sketchfab platform. Despite other methods, upload must be issued using multipart/form-data\n"
+            },
+            "get": {
+                "description": "Returns list of model. Private, unpublished,\n  models cannot be retreived with this method.This endpoint is **paginated** by 24 models per pages.\n",
+                "tags": [
+                    "models"
+                ],
+                "responses": {
+                    "200": {
+                        "schema": {
+                            "$ref": "#/definitions/ModelResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "response": {
+                                    "next": "api.sketchfab.com/v3/models/cursor=azerty",
+                                    "results": [
+                                        {
+                                            "website": null,
+                                            "subscriptionCount": 0,
+                                            "followerCount": 0,
+                                            "uid": "53bac75dbbde4525b78f11e07e98c267",
+                                            "viewCount": 11,
+                                            "modelsUrl": "https://api.sketchfab.com/v3/models??user=bot",
+                                            "likeCount": 0,
+                                            "facebookUsername": null,
+                                            "biography": null,
+                                            "dateJoined": "2016-04-20T11:44:11.084906",
+                                            "city": null,
+                                            "account": "pro",
+                                            "displayName": "bot",
+                                            "profileUrl": "https://sketchfab.com/bot",
+                                            "followingsUrl": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267/followings",
+                                            "skills": [],
+                                            "tagline": null,
+                                            "uri": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267",
+                                            "modelCount": 1,
+                                            "username": "bot",
+                                            "linkedinUsername": null,
+                                            "likesUrl": "https://api.sketchfab.com/v3/models??liked_by=bot",
+                                            "followersUrl": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267/followers",
+                                            "collectionCount": 0,
+                                            "country": null,
+                                            "followingCount": 0,
+                                            "twitterUsername": null,
+                                            "collectionsUrl": "https://api.sketchfab.com/v3/collections??by=bot",
+                                            "avatar": {
+                                                "images": [
+                                                    {
+                                                        "url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/0f5f69d691a946df94e46f60ef2933cd.jpeg",
+                                                        "width": 100,
+                                                        "height": 100,
+                                                        "size": 3011
+                                                    },
+                                                    {
+                                                        "url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/91587bbdc9f349deab76f26ff440df5f.jpeg",
+                                                        "width": 90,
+                                                        "height": 90,
+                                                        "size": 2657
+                                                    },
+                                                    {
+                                                        "url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/f1919a08fcb04cb29cac88d7c052bbab.jpeg",
+                                                        "width": 48,
+                                                        "height": 48,
+                                                        "size": 1243
+                                                    },
+                                                    {
+                                                        "url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/3a459d2c418240e1afb9b48614e2b61f.jpeg",
+                                                        "width": 32,
+                                                        "height": 32,
+                                                        "size": 776
+                                                    }
+                                                ],
+                                                "updatedAt": "2016-04-20T09:42:25.973491",
+                                                "uri": "https://api.sketchfab.com/v3/avatars/7c5b5af6f9174567a0295135a5b8b04f",
+                                                "createdAt": "2016-04-20T09:42:25.973491",
+                                                "name": "avatar-orange.jpg"
+                                            }
+                                        }
+                                    ],
+                                    "previous": null
+                                }
+                            }
+                        },
+                        "description": "Successful response"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "used for pagination",
+                        "in": "query",
+                        "name": "cursor"
+                    },
+                    {
+                        "required": false,
+                        "type": "integer",
+                        "description": "pagination size. max 24",
+                        "in": "query",
+                        "name": "count"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either createdAt, -createdAt, viewCount or -viewCount",
+                        "in": "query",
+                        "name": "sort_by"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "a `username`. Retreives the models uploaded by `user`",
+                        "in": "query",
+                        "name": "user"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "a tag slug. Retreives the models tagged with the query filter tags. If used multiple time, return models tagged with all the specified tags.",
+                        "in": "query",
+                        "name": "tags"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "array of categories slug. Retreives the models in the specified categories",
+                        "in": "query",
+                        "name": "categories"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "a username retreives the models liked by user",
+                        "in": "query",
+                        "name": "likedBy"
+                    },
+                    {
+                        "required": false,
+                        "type": "integer",
+                        "name": "maxFaceCount",
+                        "in": "query"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Retreives the models published after sinceDate",
+                        "format": "date",
+                        "required": false,
+                        "type": "string",
+                        "name": "publishedSince"
+                    },
+                    {
+                        "required": false,
+                        "type": "boolean",
+                        "description": "Retreives the models staffpicked",
+                        "in": "query",
+                        "name": "staffpicked"
+                    },
+                    {
+                        "required": false,
+                        "type": "boolean",
+                        "description": "Retreives the models that have a licence. (hence are downloadable)",
+                        "in": "query",
+                        "name": "downloadable"
+                    },
+                    {
+                        "required": false,
+                        "type": "boolean",
+                        "description": "Retreives the models with an animation_count greater than 0.",
+                        "in": "query",
+                        "name": "animated"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/models/{uid}/options": {
+            "patch": {
+                "description": "Change a model options",
+                "tags": [
+                    "models"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No-Content"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "define the shadding type either lit or shadeless",
+                        "in": "formData",
+                        "name": "shading"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "define the background used. Either a color, an image, an environment or transparent. ex. {\"color\": \"#ffffff\"} or {\"environment\": \"aeff32435ffabcdd\"}\n",
+                        "in": "formData",
+                        "name": "background"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either a 4x4 matrix or an angle with an axis.\n",
+                        "in": "formData",
+                        "name": "orientation"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/me/followings": {
+            "post": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "users"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Sucessfull add"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "description": "the user uid you want to follow",
+                        "in": "formData",
+                        "name": "toUser"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            },
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "users",
+                    "relationships"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfull result",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "number of objects returned per page. Max 24",
+                        "in": "query",
+                        "name": "count"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either dateJoined, -dateJoined, followerCount or -followerCount",
+                        "in": "query",
+                        "name": "sort_by"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "used for pagination",
+                        "in": "query",
+                        "name": "cursor"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/tags/{slug}": {
+            "get": {
+                "tags": [
+                    "tags"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/TagRelated"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "slug",
+                        "in": "path"
+                    }
+                ],
+                "description": "get detail about a tag"
+            }
+        },
+        "/v3/categories": {
+            "get": {
+                "description": "return the list of available categories",
+                "tags": [
+                    "categories"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/CategoriesResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "number of objects returned per page. Max 24",
+                        "in": "query",
+                        "name": "count"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either slug or -slug",
+                        "in": "query",
+                        "name": "sort_by"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/me/subscriptions": {
+            "post": {
+                "responses": {
+                    "201": {
+                        "description": "Sucessfull add"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "description": "the collection uid you want to subscribe",
+                        "in": "formData",
+                        "name": "collection"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "collections"
+                ],
+                "description": "add a collection to your subscriptions"
+            },
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "description": "Return collections the user subscribed",
+                "responses": {
+                    "200": {
+                        "description": "Successfull result",
+                        "schema": {
+                            "$ref": "#/definitions/CollectionResponse"
+                        }
+                    }
+                },
+                "tags": [
+                    "me",
+                    "collections"
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/me/models": {
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "models"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfull result",
+                        "schema": {
+                            "$ref": "#/definitions/ModelResponse"
+                        }
+                    }
+                },
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/collections/{uid}": {
+            "put": {
+                "description": "adds/remove models to a collection",
+                "tags": [
+                    "collections"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content, Successful update of the collection"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    },
+                    {
+                        "required": true,
+                        "in": "body",
+                        "description": "list of models uids in the collection.",
+                        "name": "models"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            },
+            "get": {
+                "description": "Returns details about a collection",
+                "tags": [
+                    "collections"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/CollectionDetail"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            },
+            "patch": {
+                "description": "adds/remove models to a collection",
+                "tags": [
+                    "collections"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content, Successful update of the collection"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    },
+                    {
+                        "required": true,
+                        "in": "body",
+                        "description": "list of models uids in the collection.",
+                        "name": "models"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/me/likes": {
+            "post": {
+                "responses": {
+                    "201": {
+                        "description": "Model sucessfully liked"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "description": "the model uid you want to like",
+                        "in": "formData",
+                        "name": "model"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "models"
+                ],
+                "description": "like a model"
+            },
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "models",
+                    "likes"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfull result",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    }
+                },
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/collections/{uid}/models": {
+            "get": {
+                "description": "returns models of a collection",
+                "tags": [
+                    "collections",
+                    "models"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/CollectionModelResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "cursor",
+                        "in": "query"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/me/likes/{uid}": {
+            "delete": {
+                "responses": {
+                    "204": {
+                        "description": "Sucessfull delete"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "users",
+                    "me",
+                    "likes"
+                ],
+                "description": "un-like a model"
+            }
+        },
+        "/v3/me/environments": {
+            "post": {
+                "description": "Create a new environment. You need to have a pro account for doing this",
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "description": "the environment name",
+                        "in": "formData",
+                        "name": "name"
+                    },
+                    {
+                        "required": true,
+                        "type": "file",
+                        "description": "the environment file you wich to upload",
+                        "in": "formData",
+                        "name": "environmentFile"
+                    }
+                ],
+                "produces": [
+                    "aplication/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "environment"
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Sucessfully Created"
+                    }
+                }
+            },
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "description": "list available environments (default environments and yours)",
+                "responses": {
+                    "200": {
+                        "description": "Successfull result",
+                        "schema": {
+                            "$ref": "#/definitions/EnvironmentResponse"
+                        }
+                    }
+                },
+                "tags": [
+                    "me",
+                    "environment"
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/licenses": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#definitions/LicencesResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "used for pagination",
+                        "in": "query",
+                        "name": "cursor"
+                    },
+                    {
+                        "required": false,
+                        "type": "integer",
+                        "description": "pagination size. max 24",
+                        "in": "query",
+                        "name": "count"
+                    }
+                ],
+                "description": "get the available licences on sketchfab"
+            }
+        },
+        "/v3/search?type=users": {
+            "get": {
+                "tags": [
+                    "search",
+                    "users"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Users matching the search",
+                        "schema": {
+                            "$ref": "#/definitions/UserSearchResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "username",
+                        "in": "query"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either country or city",
+                        "in": "query",
+                        "name": "location"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either free, pro, biz",
+                        "in": "query",
+                        "name": "account"
+                    },
+                    {
+                        "required": false,
+                        "type": "array",
+                        "description": "skills slugs",
+                        "in": "query",
+                        "name": "skills"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "slug of a segment",
+                        "in": "query",
+                        "name": "segment"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either followerCount, -followerCount, modelCount, -modelCount or username",
+                        "in": "query",
+                        "name": "sort_by"
+                    }
+                ],
+                "description": "Search and filters in users"
+            }
+        },
+        "/v3/categories/{uid}": {
+            "get": {
+                "description": "return details about a category",
+                "tags": [
+                    "categories"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/CategoriesRelated"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/skills": {
+            "get": {
+                "description": "return a list of available skills",
+                "tags": [
+                    "skills"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/SkillsResponse"
+                        }
+                    }
+                },
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/tags": {
+            "get": {
+                "tags": [
+                    "tags"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "get a list of tags",
+                        "schema": {
+                            "$ref": "#/definitions/TagsResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "cursor",
+                        "in": "query"
+                    }
+                ],
+                "description": "Successful response"
+            }
+        },
+        "/v3/me/background": {
+            "post": {
+                "responses": {
+                    "201": {
+                        "description": "Create a new background (needs to be have a pro account"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "file",
+                        "description": "the image background",
+                        "in": "formData",
+                        "name": "image"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "models",
+                    "me"
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ]
+            },
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "models",
+                    "backgrounds"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfull result",
+                        "schema": {
+                            "$ref": "#/definitions/BackgroundResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "either createdAt or -createdAt",
+                        "in": "query",
+                        "name": "sort_by"
+                    },
+                    {
+                        "required": false,
+                        "type": "integer",
+                        "description": "pagination size. max 24",
+                        "in": "query",
+                        "name": "count"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/collections/thumbnails": {
+            "get": {
+                "tags": [
+                    "collection",
+                    "thumbnails"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/CollectionsThumbnailsResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "array",
+                        "name": "uids",
+                        "in": "query"
+                    }
+                ],
+                "description": "returns the thumbnails of the three most popular model for each collection"
+            }
+        },
+        "/v3/users/{uid}/followings": {
+            "get": {
+                "description": "Returns users followed by a particular user",
+                "tags": [
+                    "users",
+                    "relationships"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "cursor",
+                        "in": "query"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        }
+    },
+    "schemes": [
+        "https"
+    ],
+    "tags": [
+        {
+            "name": "models"
+        },
+        {
+            "name": "users"
+        },
+        {
+            "name": "collections"
+        },
+        {
+            "name": "avatars"
+        },
+        {
+            "name": "categories"
+        },
+        {
+            "name": "skills"
+        },
+        {
+            "name": "environments"
+        },
+        {
+            "name": "tags"
+        },
+        {
+            "name": "relationships"
+        },
+        {
+            "name": "backgrounds"
+        },
+        {
+            "name": "thumbnails"
+        },
+        {
+            "name": "likes"
+        },
+        {
+            "name": "search"
+        }
+    ],
+    "securityDefinitions": {
+        "Token": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    },
+    "host": "api.sketchfab.com",
+    "definitions": {
+        "CollectionList": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "description": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "models": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "modelCount": {
+                    "type": "integer"
+                },
+                "user": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "owner": {
+                    "$ref": "#/definitions/UserDetail"
+                },
+                "embedUrl": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "thumbnails": {
+                    "items": {
+                        "$ref": "#/definitions/ThumbnailsRelated"
+                    },
+                    "type": "object"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "MeDetail": {
+            "type": "object",
+            "properties": {
+                "website": {
+                    "type": "string"
+                },
+                "subscriptionCount": {
+                    "type": "integer"
+                },
+                "followerCount": {
+                    "type": "integer"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "modelsUrl": {
+                    "type": "string"
+                },
+                "likeCount": {
+                    "type": "integer"
+                },
+                "billingCycle": {
+                    "type": "string"
+                },
+                "facebookUsername": {
+                    "type": "string"
+                },
+                "biography": {
+                    "type": "string"
+                },
+                "dateJoined": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "account": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "profileUrl": {
+                    "type": "string"
+                },
+                "followingsUrl": {
+                    "type": "string"
+                },
+                "skills": {
+                    "items": {
+                        "$ref": "#/definitions/SkillDetail"
+                    },
+                    "type": "array"
+                },
+                "tagline": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "modelCount": {
+                    "type": "integer"
+                },
+                "apiToken": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "linkedinUsername": {
+                    "type": "string"
+                },
+                "likesUrl": {
+                    "type": "string"
+                },
+                "followersUrl": {
+                    "type": "string"
+                },
+                "collectionCount": {
+                    "type": "integer"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "followingCount": {
+                    "type": "integer"
+                },
+                "twitterUsername": {
+                    "type": "string"
+                },
+                "collectionsUrl": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "$ref": "#/definitions/AvatarRelated"
+                }
+            }
+        },
+        "AvatarRelated": {
+            "type": "object",
+            "properties": {
+                "image": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "uri": {
+                    "type": "string"
+                }
+            }
+        },
+        "UserSearchResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/UserSearchList"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "CollectionsThumbnailsResponse": {
+            "type": "object",
+            "properties": {
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/ThumbnailsRelated"
+                    },
+                    "type": "array"
+                }
+            }
+        },
+        "EnvironmentResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/Environment"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "ModelSearchList": {
+            "type": "object",
+            "properties": {
+                "viewCount": {
+                    "type": "integer"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "animationCount": {
+                    "type": "integer"
+                },
+                "viewerUrl": {
+                    "type": "string"
+                },
+                "isPublished": {
+                    "type": "boolean"
+                },
+                "publishedAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "likeCount": {
+                    "type": "integer"
+                },
+                "commentCount": {
+                    "type": "integer"
+                },
+                "staffpickedAt": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "date"
+                },
+                "user": {
+                    "$ref": "#/definitions/UserRelated"
+                },
+                "downloadCount": {
+                    "type": "integer"
+                },
+                "embedUrl": {
+                    "type": "string"
+                },
+                "isDownloadable": {
+                    "type": "boolean"
+                },
+                "thumbnails": {
+                    "$ref": "#/definitions/ThumbnailsRelated"
+                }
+            }
+        },
+        "UserRelated": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string"
+                },
+                "profileUrl": {
+                    "type": "string"
+                },
+                "account": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "avatars": {
+                    "items": {
+                        "$ref": "#/definitions/AvatarRelated"
+                    },
+                    "type": "array"
+                },
+                "uri": {
+                    "type": "string"
+                }
+            }
+        },
+        "UserDetail": {
+            "type": "object",
+            "properties": {
+                "website": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "subscriptionCount": {
+                    "type": "integer"
+                },
+                "followerCount": {
+                    "type": "integer"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "modelsUrl": {
+                    "type": "string"
+                },
+                "portfolioUrl": {
+                    "type": "string"
+                },
+                "likeCount": {
+                    "type": "integer"
+                },
+                "facebookUsername": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "biography": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "dateJoined": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "city": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "account": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "profileUrl": {
+                    "type": "string"
+                },
+                "followingsUrl": {
+                    "type": "string"
+                },
+                "skills": {
+                    "items": {
+                        "$ref": "#/definitions/SkillDetail"
+                    },
+                    "type": "array"
+                },
+                "tagline": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "modelCount": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "linkedinUsername": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "likesUrl": {
+                    "type": "string"
+                },
+                "followersUrl": {
+                    "type": "string"
+                },
+                "collectionCount": {
+                    "type": "integer"
+                },
+                "country": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "followingCount": {
+                    "type": "integer"
+                },
+                "twitterUsername": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "collectionsUrl": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "$ref": "#/definitions/AvatarRelated"
+                }
+            }
+        },
+        "ModelResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/ModelList"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "BackgroundResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/BackgroundList"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "UserList": {
+            "type": "object",
+            "properties": {
+                "website": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "subscriptionCount": {
+                    "type": "integer"
+                },
+                "followerCount": {
+                    "type": "integer"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "modelsUrl": {
+                    "type": "string"
+                },
+                "portfolioUrl": {
+                    "type": "string"
+                },
+                "likeCount": {
+                    "type": "integer"
+                },
+                "facebookUsername": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "biography": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "dateJoined": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "city": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "account": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "profileUrl": {
+                    "type": "string"
+                },
+                "followingsUrl": {
+                    "type": "string"
+                },
+                "skills": {
+                    "items": {
+                        "$ref": "#/definitions/SkillDetail"
+                    },
+                    "type": "array"
+                },
+                "tagline": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "modelCount": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "linkedinUsername": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "likesUrl": {
+                    "type": "string"
+                },
+                "followersUrl": {
+                    "type": "string"
+                },
+                "collectionCount": {
+                    "type": "integer"
+                },
+                "country": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "followingCount": {
+                    "type": "integer"
+                },
+                "twitterUsername": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "collectionsUrl": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "$ref": "#/definitions/AvatarRelated"
+                }
+            }
+        },
+        "Licences": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "requirements": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
+        "CollectionPost": {
+            "type": "object",
+            "properties": {
+                "models": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
+        "CollectionSearchResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/CollectionSearchList"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "SkillDetail": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                }
+            }
+        },
+        "LicencesResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/Licences"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "CollectionModelResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/ModelList"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "ModelList": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "tags": {
+                    "items": {
+                        "$ref": "#/definitions/TagRelated"
+                    },
+                    "type": "array"
+                },
+                "publishedAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "likeCount": {
+                    "type": "integer"
+                },
+                "commentCount": {
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/UserRelated"
+                },
+                "animationCount": {
+                    "type": "integer"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "categories": {
+                    "items": {
+                        "$ref": "#/definitions/CategoriesRelated"
+                    },
+                    "type": "array"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "viewCount": {
+                    "type": "integer"
+                },
+                "thumbnails": {
+                    "$ref": "#/definitions/ThumbnailsRelated"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "faceCount": {
+                    "type": "integer"
+                },
+                "staffpickedAt": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "date"
+                },
+                "isDownloadable": {
+                    "type": "boolean"
+                },
+                "embedUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "MePatch": {
+            "type": "object",
+            "properties": {
+                "website": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "city": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "displayName": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "skills": {
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "country": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "password_confirmation": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "linkedinUsername": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "interest": {
+                    "type": [
+                        "array",
+                        "null"
+                    ]
+                },
+                "tagline": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "twitterUsername": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "password": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "facebookUsername": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "email": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "biography": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "TagsResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/TagRelated"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "UserSearchList": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "followerCount": {
+                    "type": "integer"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "skills": {
+                    "items": {
+                        "$ref": "#/definitions/SkillDetail"
+                    },
+                    "type": "array"
+                },
+                "country": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "account": {
+                    "type": "string"
+                },
+                "modelCount": {
+                    "type": "integer"
+                },
+                "avatars": {
+                    "$ref": "#/definitions/AvatarRelated"
+                },
+                "profileUrl": {
+                    "type": "string"
+                }
+            }
+        },
+        "ThumbnailsRelated": {
+            "type": "object",
+            "properties": {
+                "images": {
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "url": {
+                                "type": "string"
+                            },
+                            "width": {
+                                "type": "integer"
+                            },
+                            "size": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "uid": {
+                                "type": "string"
+                            },
+                            "height": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "type": "array"
+                }
+            }
+        },
+        "CategoriesRelated": {
+            "type": "object",
+            "properties": {
+                "uri": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "ModelDetail": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "object"
+                },
+                "files": {
+                    "items": {
+                        "$ref": "#/definitions/File"
+                    },
+                    "type": "array"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "tags": {
+                    "items": {
+                        "$ref": "#/definitions/TagRelated"
+                    },
+                    "type": "array"
+                },
+                "viewerUrl": {
+                    "type": "string"
+                },
+                "categories": {
+                    "items": {
+                        "$ref": "#/definitions/CategoriesRelated"
+                    },
+                    "type": "array"
+                },
+                "publishedAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "likeCount": {
+                    "type": "integer"
+                },
+                "commentCount": {
+                    "type": "integer"
+                },
+                "vertexCount": {
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/UserRelated"
+                },
+                "animationCount": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "description": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "viewCount": {
+                    "type": "integer"
+                },
+                "thumbnails": {
+                    "$ref": "#/definitions/ThumbnailsRelated"
+                },
+                "license": {
+                    "type": "object"
+                },
+                "editorUrl": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "archiveSize": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "originalFileName": {
+                    "type": [
+                        "object",
+                        "null"
+                    ]
+                },
+                "faceCount": {
+                    "type": "integer"
+                },
+                "ext": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "staffpickedAt": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "date"
+                },
+                "isDownloadable": {
+                    "type": "boolean"
+                },
+                "downloadCount": {
+                    "type": "integer"
+                },
+                "embedUrl": {
+                    "type": "string"
+                },
+                "options": {
+                    "type": "object"
+                }
+            }
+        },
+        "ModelPatch": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "tags": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "private": {
+                    "type": "boolean"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "licence": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "options": {
+                    "type": "string",
+                    "description": "json describing the options to use for the model. See \"/v3/models/{uid}/options\" endpoint.\n"
+                },
+                "categories": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "is_published": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "GlobalSearchResponse": {
+            "type": "object",
+            "properties": {
+                "results": {
+                    "type": "object",
+                    "properties": {
+                        "models": {
+                            "items": {
+                                "$ref": "#/definitions/ModelSearchList"
+                            },
+                            "type": "array"
+                        },
+                        "collections": {
+                            "items": {
+                                "$ref": "#/definitions/CollectionSearchList"
+                            },
+                            "type": "array"
+                        },
+                        "users": {
+                            "items": {
+                                "$ref": "#/definitions/UserSearchResponse"
+                            },
+                            "type": "array"
+                        }
+                    }
+                }
+            }
+        },
+        "CategoriesResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/CategoriesRelated"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "CollectionSearchList": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "collectionUrl": {
+                    "type": "string"
+                },
+                "modelCount": {
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/UserRelated"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "embedUrl": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "ModelSearchResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/ModelSearchList"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "Environment": {
+            "type": "object",
+            "properties": {
+                "uid": {
+                    "type": "string"
+                },
+                "brightness": {
+                    "type": "integer"
+                },
+                "processing": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "diffuseSPH": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "LicencesDetail": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                },
+                "fullName": {
+                    "type": "string"
+                },
+                "requirements": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
+        "BackgroundList": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "images": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "CollectionResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/CollectionList"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "UserResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/UserList"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "CollectionDetail": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "modelCount": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "owner": {
+                    "$ref": "#/definitions/UserDetail"
+                },
+                "embedUrl": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "thumbnails": {
+                    "items": {
+                        "$ref": "#/definitions/ThumbnailsRelated"
+                    },
+                    "type": "object"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "SkillsResponse": {
+            "type": "object",
+            "properties": {
+                "previous": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "results": {
+                    "items": {
+                        "$ref": "#/definitions/SkillDetail"
+                    },
+                    "type": "array"
+                },
+                "next": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            }
+        },
+        "TagRelated": {
+            "type": "object",
+            "properties": {
+                "slug": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                }
+            }
+        },
+        "File": {
+            "type": "object",
+            "properties": {
+                "wireframeSize": {
+                    "type": "integer"
+                },
+                "flag": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "modelSize": {
+                    "type": "integer"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "osgjsSize": {
+                    "type": "integer"
+                },
+                "metadata": {
+                    "type": "object"
+                }
+            }
+        }
+    },
+    "swagger": "2.0"
+}

@@ -1,0 +1,22 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SketchfabDataApi</title>
+    <script src="../../dist/SketchfabDataApi.js"></script>
+</head>
+
+<body>
+
+</body>
+<script>
+var api = new SketchfabDataApi();
+api.then( function ( client ) {
+    console.log( client.apis.help() );
+    
+    client.apis.models.get_v3_models().then( function ( response ){
+        console.log( response );
+    } );
+} );
+</script>
+</html>
