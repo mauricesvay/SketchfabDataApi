@@ -4691,6 +4691,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    useJQuery: this.useJQuery,
 	    jqueryAjaxCache: this.jqueryAjaxCache,
 	    connectionAgent: this.connectionAgent,
+	    enableCookies: this.enableCookies,
 	    url: this.url,
 	    method: 'get',
 	    headers: {
@@ -4802,6 +4803,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            scopes.vendorExtensions = {};
 	            for (var s in scopes) {
 	              helpers.extractExtensions(s, scopes);
+	              if(s.indexOf('x-') === 0) {
+	                delete scopes[s];
+	              }
 	            }
 	          }
 	        }
@@ -9349,8 +9353,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      ch = state.input.charCodeAt(++state.position);
 	
 	      if (ch === 0x27/* ' */) {
-	        captureStart = captureEnd = state.position;
+	        captureStart = state.position;
 	        state.position++;
+	        captureEnd = state.position;
 	      } else {
 	        return true;
 	      }
@@ -10195,8 +10200,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          break;
 	        }
 	      }
-	    } else if (_hasOwnProperty.call(state.typeMap, state.tag)) {
-	      type = state.typeMap[state.tag];
+	    } else if (_hasOwnProperty.call(state.typeMap[state.kind || 'fallback'], state.tag)) {
+	      type = state.typeMap[state.kind || 'fallback'][state.tag];
 	
 	      if (state.result !== null && type.kind !== state.kind) {
 	        throwError(state, 'unacceptable node kind for !<' + state.tag + '> tag; it should be "' + type.kind + '", not "' + state.kind + '"');
@@ -10655,7 +10660,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  schema[name].forEach(function (currentType) {
 	    result.forEach(function (previousType, previousIndex) {
-	      if (previousType.tag === currentType.tag) {
+	      if (previousType.tag === currentType.tag && previousType.kind === currentType.kind) {
 	        exclude.push(previousIndex);
 	      }
 	    });
@@ -10670,16 +10675,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	function compileMap(/* lists... */) {
-	  var result = {}, index, length;
+	  var result = {
+	        scalar: {},
+	        sequence: {},
+	        mapping: {},
+	        fallback: {}
+	      }, index, length;
 	
 	  function collectType(type) {
-	    result[type.tag] = type;
+	    result[type.kind][type.tag] = result['fallback'][type.tag] = type;
 	  }
 	
 	  for (index = 0, length = arguments.length; index < length; index += 1) {
 	    arguments[index].forEach(collectType);
 	  }
-	
 	  return result;
 	}
 	
@@ -17737,8 +17746,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (tag.slice(0, 2) === '!!') {
 	      tag = 'tag:yaml.org,2002:' + tag.slice(2);
 	    }
-	
-	    type = schema.compiledTypeMap[tag];
+	    type = schema.compiledTypeMap['fallback'][tag];
 	
 	    if (type && _hasOwnProperty.call(type.styleAliases, style)) {
 	      style = type.styleAliases[style];
@@ -18495,6 +18503,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.client = parent.options.client || null;
 	    this.requestInterceptor = parent.options.requestInterceptor || null;
 	    this.responseInterceptor = parent.options.responseInterceptor || null;
+	    this.requestAgent = parent.options.requestAgent;
 	  }
 	  this.authorizations = args.security;
 	  this.basePath = parent.basePath || '/';
@@ -19247,6 +19256,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    opts.client = this.client;
 	  }
 	
+	  if(this.requestAgent) {
+	    opts.requestAgent = this.requestAgent;
+	  }
+	
 	  // add the request interceptor from parent, if none sent from client
 	  if(!opts.requestInterceptor && this.requestInterceptor ) {
 	    opts.requestInterceptor = this.requestInterceptor ;
@@ -19722,6 +19735,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	  client.opts = opts || {};
 	
+	  if (opts && opts.requestAgent) {
+	    request = opts.requestAgent;
+	  }
+	
 	  // legacy support
 	  var hasJQuery = false;
 	  if(typeof window !== 'undefined') {
@@ -19899,12 +19916,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    method = 'del';
 	  }
 	  var headers = obj.headers || {};
-	  var r = request[method](obj.url);
 	
 	  if (connectionAgent) {
-	    r.agent(connectionAgent);
+	      request = request.agent(connectionAgent);
 	  }
-	  
+	
+	  var r = request[method](obj.url);
+	
 	  if (timeout) {
 	    r.timeout(timeout);
 	  }
@@ -20042,7 +20060,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if(!accept) {
 	    return false;
 	  }
-	  return (/^image/i).test(accept) || (/^application\/pdf/).test(accept);
+	  return (/^image/i).test(accept)
+	    || (/^application\/pdf/).test(accept)
+	    || (/^application\/octet-stream/).test(accept);
 	};
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(34).Buffer))
@@ -23934,10 +23954,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	          var sharedParameters = path.parameters || [];
 	          var parameters = operation.parameters || [];
 	
-	          for (i in sharedParameters) {
-	            parameter = sharedParameters[i];
+	          sharedParameters.forEach(function(parameter) {
 	            parameters.unshift(parameter);
-	          }
+	          });
+	
 	          if (method !== 'parameters' && _.isObject(operation)) {
 	            operation.parameters = operation.parameters || parameters;
 	          }
@@ -25372,6 +25392,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = {
 		"info": {
 			"version": "3.0.0",
+			"description": "The Sketchfab REST API provide access to read and write Sketchfab data. Users are authentified with their Sketchfab API Token or OAuth2 credentials. Responses are formatted in JSON. Inputs are in JSON unless specified otherwise.\n\n## How to make authenticated requests\n\nSeveral endpoints can be read without authentication but you'll need to create an OAuth2 app or use your Sketchfab API Token for restricted endpoints.\n\n### Sketchfab API Token\n\nIn the headers of your HTTP request using Authorization Token.\n\n### OAuth2\n\nIn the headers of your HTTP request using Authorization Bearer.\n\n## Pagination\n\nMost lists from the Sketchfab REST API are paginated with a cursor; next and previous links are provided.\n\n## Size\n\nA count parameter can be sent on lists endpoints to retrieve a particular number of items. Max is 24, default is 24.\n\n## Date format\n\nDates are formatted using the ISO 8601 format.\n",
 			"title": "Sketchfab API"
 		},
 		"paths": {
@@ -25379,7 +25400,13 @@ return /******/ (function(modules) { // webpackBootstrap
 				"delete": {
 					"responses": {
 						"204": {
-							"description": "Successful delete"
+							"description": "No Content"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						},
+						"404": {
+							"description": "Not Found"
 						}
 					},
 					"parameters": [
@@ -25402,115 +25429,46 @@ return /******/ (function(modules) { // webpackBootstrap
 						"me",
 						"collections"
 					],
-					"description": "delete a subscription"
+					"description": "Unsubscribes to a collection."
 				}
 			},
 			"/v3/users": {
 				"get": {
-					"description": "Users endpoint for sketchfab api",
+					"description": "Returns a list of users.",
 					"tags": [
 						"users"
 					],
 					"responses": {
 						"200": {
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/UserResponse"
-							},
-							"examples": {
-								"application/json": {
-									"response": {
-										"count": 24,
-										"next": "api.sketchfab.com/v3/users/cursor=azerty'",
-										"results": [
-											{
-												"website": "http://mightypirate.com",
-												"subscriptionCount": 4,
-												"followerCount": 2,
-												"uid": "a6a996ed17c343c58568984c9aa0eaf8",
-												"modelsUrl": "https://api.sketchfab.com/v3/models?user=black.elm",
-												"portfolioUrl": null,
-												"likeCount": 6,
-												"facebookUsername": "migthtypirate",
-												"biography": "I am a mighty pirate",
-												"city": "Toronto",
-												"account": "free",
-												"displayName": "black.elm",
-												"profileUrl": "https://sketchfab.com/black.elm",
-												"followingsUrl": "https://api.sketchfab.com/v3/users/followings/black.elm",
-												"skills": [
-													{
-														"name": "IronCAD",
-														"uri": "https://api.sketchfab.com/v3/skills/ironcad"
-													},
-													{
-														"name": "Lightwave 3D",
-														"uri": "https://api.sketchfab.com/v3/skills/lightwave-3d"
-													}
-												],
-												"tagline": "I'm a mighty pirate!",
-												"uri": "https://api.sketchfab.com/v3/users/a6a996ed17c343c58568984c9aa0eaf8",
-												"dateJoined": "2015-08-20T12:23:00.135222",
-												"modelCount": 0,
-												"username": "black.elm",
-												"linkedinUsername": "black.elm",
-												"likesUrl": "https://api.sketchfab.com/v3/models?liked_by=black.elm",
-												"followersUrl": "https://api.sketchfab.com/v3/users/followers/black.elm",
-												"collectionCount": 5,
-												"country": "Canada",
-												"followingCount": 0,
-												"twitterUsername": "black.elm",
-												"collectionsUrl": "https://api.sketchfab.com/v3/collections?by=black.elm",
-												"avatar": {
-													"images": null,
-													"updatedAt": "2016-04-05T08:55:27.489627",
-													"name": "avatar-gray",
-													"createdAt": "2016-04-05T08:55:27.489627",
-													"uri": "https://api.sketchfab.com/v3/avatars/3ef1bd11d3eb4b57a0b353e8f2e5fc3e"
-												}
-											}
-										],
-										"previous": null
-									}
-								}
-							},
-							"description": "Successful response"
+							}
 						}
 					},
 					"parameters": [
 						{
 							"required": false,
 							"type": "string",
-							"description": "used for pagination",
-							"in": "query",
-							"name": "cursor"
-						},
-						{
-							"required": false,
-							"type": "integer",
-							"description": "pagination size. max 24",
-							"in": "query",
-							"name": "count"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "either dateJoined, -dateJoined, followerCount, -followerCount",
-							"in": "query",
-							"name": "sort_by"
+							"name": "sort_by",
+							"enum": [
+								"dateJoined",
+								"-dateJoined",
+								"followerCount",
+								"-followerCount"
+							],
+							"in": "query"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "search users by location",
-							"in": "query",
-							"name": "location"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "search users by account type (free or pro)",
-							"in": "query",
-							"name": "account"
+							"name": "account",
+							"enum": [
+								"free",
+								"pro",
+								"biz"
+							],
+							"in": "query"
 						}
 					],
 					"produces": [
@@ -25526,7 +25484,7 @@ return /******/ (function(modules) { // webpackBootstrap
 					],
 					"responses": {
 						"200": {
-							"description": "Collections matching the search",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/CollectionSearchResponse"
 							}
@@ -25542,16 +25500,19 @@ return /******/ (function(modules) { // webpackBootstrap
 						{
 							"required": false,
 							"type": "string",
-							"description": "username of the owner",
+							"description": "Searches collections by user (username)",
 							"in": "query",
 							"name": "user"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "either createdAt, -createdAt",
-							"in": "query",
-							"name": "sort_by"
+							"name": "sort_by",
+							"enum": [
+								"createdAt",
+								"-createdAt"
+							],
+							"in": "query"
 						}
 					],
 					"description": "Search in collections"
@@ -25559,14 +25520,14 @@ return /******/ (function(modules) { // webpackBootstrap
 			},
 			"/v3/avatars/{uid}": {
 				"get": {
-					"description": "returns a user avatar",
+					"description": "Returns a user avatar",
 					"tags": [
 						"avatars",
 						"users"
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/AvatarRelated"
 							}
@@ -25587,11 +25548,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			},
 			"/v3/me/environments/{uid}": {
 				"patch": {
-					"responses": {
-						"204": {
-							"description": "Sucessfull update"
-						}
-					},
+					"description": "Updates an environment (pro only).",
 					"parameters": [
 						{
 							"required": true,
@@ -25601,9 +25558,11 @@ return /******/ (function(modules) { // webpackBootstrap
 						},
 						{
 							"required": true,
-							"type": "string",
-							"name": "name",
-							"in": "formData"
+							"in": "body",
+							"name": "body",
+							"schema": {
+								"$ref": "#/definitions/EnvironmentPatch"
+							}
 						}
 					],
 					"produces": [
@@ -25618,12 +25577,25 @@ return /******/ (function(modules) { // webpackBootstrap
 						"me",
 						"environment"
 					],
-					"description": "Update an environment. You need to have a pro account and you cannot update default environments\n"
+					"consumes": [
+						"application/json"
+					],
+					"responses": {
+						"204": {
+							"description": "No Content"
+						}
+					}
 				},
 				"delete": {
 					"responses": {
 						"204": {
-							"description": "Sucessfull deletion"
+							"description": "No Content"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						},
+						"403": {
+							"description": "Permission Denied"
 						}
 					},
 					"parameters": [
@@ -25646,22 +25618,17 @@ return /******/ (function(modules) { // webpackBootstrap
 						"me",
 						"environment"
 					],
-					"description": "Delete an environment. You need to have a pro account to perform this action. Default environments cannot be deleted\n"
+					"description": "Deletes an environment (pro only)."
 				}
 			},
 			"/v3/collections": {
 				"post": {
-					"responses": {
-						"201": {
-							"description": "Successful create"
-						}
-					},
+					"description": "Creates a collection.",
 					"parameters": [
 						{
 							"required": true,
 							"in": "body",
-							"description": "collection definition",
-							"name": "collection",
+							"name": "body",
 							"schema": {
 								"$ref": "#/definitions/CollectionPost"
 							}
@@ -25678,118 +25645,71 @@ return /******/ (function(modules) { // webpackBootstrap
 					"tags": [
 						"collections"
 					],
-					"description": "Create a collection"
+					"consumes": [
+						"application/json"
+					],
+					"responses": {
+						"201": {
+							"description": "Success"
+						},
+						"400": {
+							"description": "Bad Request"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						}
+					}
 				},
 				"get": {
-					"description": "Return list of collections",
+					"description": "Returns a list of collections",
 					"tags": [
 						"collections"
 					],
 					"responses": {
 						"200": {
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/CollectionResponse"
-							},
-							"examples": {
-								"application/json": {
-									"response": {
-										"count": 24,
-										"next": "api.sketchfab.com/v3/collections/count=24&offset=24'",
-										"results": [
-											{
-												"name": "NSFW",
-												"description": null,
-												"uri": "https://api.sketchfab.com/v3/collections/14f64dc8402d4394bf35f9789be0890d",
-												"modelCount": 0,
-												"updatedAt": "2016-04-05T08:56:50.724723",
-												"uid": "14f64dc8402d4394bf35f9789be0890d",
-												"embedUrl": "https://sketchfab.com/playlists/embed?collection=14f64dc8402d4394bf35f9789be0890d",
-												"slug": "nsfw",
-												"createdAt": "2016-04-05T08:56:50.593513",
-												"thumbnails": {
-													"images": [
-														{
-															"url": "https://media.sketchfab.com/thumbnails/2aef175a85994e40b1bd097ba4eb4281/50x50.jpeg",
-															"width": 50,
-															"height": 50,
-															"uid": "fa056d35c8f0472984c08f768bb9ff6e",
-															"size": 344
-														},
-														{
-															"url": "https://media.sketchfab.com/thumbnails/2aef175a85994e40b1bd097ba4eb4281/100x100.jpeg",
-															"width": 100,
-															"height": 100,
-															"uid": "889e815c8e7e45b6ae790c9786b102e8",
-															"size": 600
-														},
-														{
-															"url": "https://media.sketchfab.com/thumbnails/2aef175a85994e40b1bd097ba4eb4281/200x200.jpeg",
-															"width": 200,
-															"height": 200,
-															"uid": "6d44d308ed6e440f86fd5091f7b239e0",
-															"size": 1380
-														},
-														{
-															"url": "https://media.sketchfab.com/thumbnails/2aef175a85994e40b1bd097ba4eb4281/448x252.jpeg",
-															"width": 448,
-															"height": 252,
-															"uid": "d23c2bef322b4f4aaab6cb1762614b0b",
-															"size": 2922
-														}
-													],
-													"uri": "https://api.sketchfab.com/v3/thumbnails/2aef175a85994e40b1bd097ba4eb4281"
-												}
-											}
-										],
-										"previous": null
-									}
-								}
-							},
-							"description": "Successfull result"
+							}
 						}
 					},
 					"parameters": [
 						{
 							"required": false,
 							"type": "string",
-							"description": "used for pagination",
-							"in": "query",
-							"name": "cursor"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "search for collections created by a particular user (username)",
+							"description": "Retrieves collections created by user (username)",
 							"in": "query",
 							"name": "user"
 						},
 						{
+							"description": "Retrieves collections by uid",
+							"in": "query",
+							"items": {
+								"type": "string"
+							},
+							"required": false,
+							"type": "array",
+							"name": "uids"
+						},
+						{
+							"in": "query",
+							"description": "Retrieves collections created since a date (ISO 8601 format)",
+							"format": "date",
 							"required": false,
 							"type": "string",
-							"description": "search for collections matching a list of uuids",
-							"in": "query",
-							"name": "uuids"
+							"name": "created_since"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "search for collections created since a date",
-							"in": "query",
-							"name": "createdSince"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "number of objects returned per page. Max 24",
-							"in": "query",
-							"name": "count"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "either createdAt -createdAt, subscriberCount or -subscriberCount",
-							"in": "query",
-							"name": "sort_by"
+							"name": "sort_by",
+							"enum": [
+								"createdAt",
+								"-createdAt",
+								"subscriberCount",
+								"-subscriberCount"
+							],
+							"in": "query"
 						}
 					],
 					"produces": [
@@ -25804,7 +25724,7 @@ return /******/ (function(modules) { // webpackBootstrap
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/SkillDetail"
 							}
@@ -25818,7 +25738,7 @@ return /******/ (function(modules) { // webpackBootstrap
 							"in": "path"
 						}
 					],
-					"description": "get details about a skill"
+					"description": "Returns the detail of a skill"
 				}
 			},
 			"/v3/me": {
@@ -25828,10 +25748,10 @@ return /******/ (function(modules) { // webpackBootstrap
 							"Token": []
 						}
 					],
-					"description": "Return detail of the logged in user",
+					"description": "Returns your profile",
 					"responses": {
 						"200": {
-							"description": "Successfull result",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/MeDetail"
 							}
@@ -25846,16 +25766,12 @@ return /******/ (function(modules) { // webpackBootstrap
 					]
 				},
 				"patch": {
-					"responses": {
-						"204": {
-							"description": "Sucessfull update"
-						}
-					},
+					"description": "Updates your profile.",
 					"parameters": [
 						{
 							"required": true,
 							"in": "body",
-							"name": "profile",
+							"name": "body",
 							"schema": {
 								"$ref": "#/definitions/MePatch"
 							}
@@ -25872,22 +25788,38 @@ return /******/ (function(modules) { // webpackBootstrap
 					"tags": [
 						"me"
 					],
-					"description": "update profile informations"
+					"consumes": [
+						"application/json"
+					],
+					"responses": {
+						"204": {
+							"description": "No Content"
+						},
+						"400": {
+							"description": "Bad Request"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						}
+					}
 				}
 			},
 			"/v3/users/{uid}/followers": {
 				"get": {
-					"description": "Returns users following a particular user",
+					"description": "Returns the followers of a user.",
 					"tags": [
 						"users",
 						"relationships"
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/UserResponse"
 							}
+						},
+						"404": {
+							"description": "Not Found"
 						}
 					},
 					"parameters": [
@@ -25896,13 +25828,6 @@ return /******/ (function(modules) { // webpackBootstrap
 							"type": "string",
 							"name": "uid",
 							"in": "path"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "used for pagination",
-							"in": "query",
-							"name": "cursor"
 						}
 					],
 					"produces": [
@@ -25914,7 +25839,10 @@ return /******/ (function(modules) { // webpackBootstrap
 				"delete": {
 					"responses": {
 						"204": {
-							"description": "Sucessfull removal"
+							"description": "No Content"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
 						}
 					},
 					"parameters": [
@@ -25938,12 +25866,12 @@ return /******/ (function(modules) { // webpackBootstrap
 						"users",
 						"relationships"
 					],
-					"description": "stop following a user"
+					"description": "Un-follows a user."
 				}
 			},
 			"/v3/models/{uid}": {
 				"put": {
-					"description": "reupload your model",
+					"description": "Reuploads a model. Accepts multipart/form-data only.",
 					"parameters": [
 						{
 							"required": true,
@@ -25954,70 +25882,61 @@ return /******/ (function(modules) { // webpackBootstrap
 						{
 							"required": false,
 							"type": "string",
-							"description": "model name",
+							"description": "Sets a name on the model (48 char max)",
 							"in": "formData",
 							"name": "name"
 						},
 						{
 							"required": false,
 							"type": "boolean",
-							"description": "this model should be private? (default false)",
+							"description": "Sets a model private (pro only).",
 							"in": "formData",
 							"name": "private"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "set a password on the model",
+							"description": "Sets a password to a model (pro only)",
 							"in": "formData",
 							"name": "password"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "name of an existing license",
+							"description": "Sets a license (label)",
 							"in": "formData",
-							"name": "licence"
+							"name": "license"
 						},
 						{
-							"required": false,
-							"type": "string",
-							"description": "comma separated list of tag slugs",
+							"description": "Sets tags (slug) to a model",
 							"in": "formData",
+							"items": {
+								"type": "string"
+							},
+							"required": false,
+							"type": "array",
 							"name": "tags"
 						},
 						{
-							"required": false,
-							"type": "string",
-							"description": "comma separated list of categories slug",
+							"description": "Sets categories (uid) to a model",
 							"in": "formData",
+							"items": {
+								"type": "string"
+							},
+							"required": false,
+							"type": "array",
 							"name": "categories"
 						},
 						{
 							"required": true,
 							"type": "file",
-							"description": "the actual model",
-							"in": "formData",
-							"name": "modelFile"
+							"name": "modelFile",
+							"in": "formData"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "the model file name",
-							"in": "formData",
-							"name": "modelFileName"
-						},
-						{
-							"required": false,
-							"type": "boolean",
-							"description": "weither the model is published or not (default true)",
-							"in": "formData",
-							"name": "is_published"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "model description",
+							"description": "Sets a description on the model (1024 char max)",
 							"in": "formData",
 							"name": "description"
 						}
@@ -26040,22 +25959,34 @@ return /******/ (function(modules) { // webpackBootstrap
 						"204": {
 							"description": "No Content"
 						},
+						"400": {
+							"description": "Bad Request"
+						},
 						"401": {
-							"description": "Authentication credentials were not provided or does not match"
+							"description": "Authentication credentials were not provided or do not match"
+						},
+						"403": {
+							"description": "Permission Denied"
+						},
+						"404": {
+							"description": "Not Found"
 						}
 					}
 				},
 				"get": {
-					"description": "Returns details about a model.",
+					"description": "Returns the detail of a model",
 					"tags": [
 						"models"
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/ModelDetail"
 							}
+						},
+						"404": {
+							"description": "Not Found"
 						}
 					},
 					"parameters": [
@@ -26075,8 +26006,17 @@ return /******/ (function(modules) { // webpackBootstrap
 						"204": {
 							"description": "No Content"
 						},
+						"400": {
+							"description": "Bad Request"
+						},
 						"401": {
-							"description": "Authentication credentials were not provided or does not match"
+							"description": "Authentication credentials were not provided or do not match"
+						},
+						"403": {
+							"description": "Permission Denied"
+						},
+						"404": {
+							"description": "Not Found"
 						}
 					},
 					"parameters": [
@@ -26089,8 +26029,7 @@ return /******/ (function(modules) { // webpackBootstrap
 						{
 							"required": true,
 							"in": "body",
-							"description": "model definition",
-							"name": "model",
+							"name": "body",
 							"schema": {
 								"$ref": "#/definitions/ModelPatch"
 							}
@@ -26107,7 +26046,7 @@ return /******/ (function(modules) { // webpackBootstrap
 					"tags": [
 						"models"
 					],
-					"description": "change some aspect of your model"
+					"description": "Updates model information."
 				}
 			},
 			"/v3/search?type=models": {
@@ -26128,84 +26067,105 @@ return /******/ (function(modules) { // webpackBootstrap
 						{
 							"required": false,
 							"type": "string",
-							"name": "q",
-							"in": "query"
+							"description": "Space separated keywords",
+							"in": "query",
+							"name": "q"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "username of the owner",
+							"description": "Searches models by a user (username)",
 							"in": "query",
 							"name": "user"
 						},
 						{
+							"description": "Searches models by tags (slug)",
+							"in": "query",
+							"items": {
+								"type": "string"
+							},
 							"required": false,
 							"type": "array",
-							"description": "tags slugs",
-							"in": "query",
 							"name": "tags"
 						},
 						{
+							"description": "Searches models by categories (slug)",
+							"in": "query",
+							"items": {
+								"type": "string"
+							},
 							"required": false,
 							"type": "array",
-							"description": "categories slugs",
-							"in": "query",
 							"name": "categories"
 						},
 						{
 							"required": false,
-							"type": "array",
-							"description": "either pending, processing, succeeded, failed",
+							"description": "Searches models by processing status",
 							"in": "query",
+							"items": {
+								"type": "string"
+							},
+							"enum": [
+								"pending",
+								"processing",
+								"succeeded",
+								"failed"
+							],
+							"type": "string",
 							"name": "processing_status"
 						},
 						{
 							"required": false,
-							"type": "boolean",
-							"name": "published",
-							"in": "query"
-						},
-						{
-							"required": false,
 							"type": "integer",
-							"description": "number of days since the model was created",
+							"description": "???",
 							"in": "query",
 							"name": "date"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "either downloadable, animated",
-							"in": "query",
-							"name": "features"
+							"name": "features",
+							"enum": [
+								"downloadable",
+								"animated"
+							],
+							"in": "query"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "either staffpicked, brands",
-							"in": "query",
-							"name": "flag"
+							"name": "flag",
+							"enum": [
+								"staffpicked",
+								"brands"
+							],
+							"in": "query"
 						},
 						{
 							"required": false,
 							"type": "integer",
-							"description": "filters out models with less faces",
+							"description": "Filters out models with less faces",
 							"in": "query",
 							"name": "face_count"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "uid of a collection",
+							"description": "Searches models by collection (uid)",
 							"in": "query",
 							"name": "collection"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "either publishedAt, -publishedAt, processedAt or -processedAt",
-							"in": "query",
-							"name": "sort_by"
+							"name": "sort_by",
+							"enum": [
+								"publishedAt",
+								"-publishedAt",
+								"processedAt",
+								"-processedAt"
+							],
+							"in": "query"
 						}
 					],
 					"description": "Search and filters in models"
@@ -26213,6 +26173,34 @@ return /******/ (function(modules) { // webpackBootstrap
 			},
 			"/v3/me/followers": {
 				"get": {
+					"responses": {
+						"200": {
+							"description": "Success",
+							"schema": {
+								"$ref": "#/definitions/UserResponse"
+							}
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						}
+					},
+					"parameters": [
+						{
+							"required": false,
+							"type": "string",
+							"name": "sort_by",
+							"enum": [
+								"dateJoined",
+								"-dateJoined",
+								"followerCount",
+								"-followerCount"
+							],
+							"in": "query"
+						}
+					],
+					"produces": [
+						"application/json"
+					],
 					"security": [
 						{
 							"Token": []
@@ -26223,40 +26211,7 @@ return /******/ (function(modules) { // webpackBootstrap
 						"users",
 						"relationships"
 					],
-					"responses": {
-						"200": {
-							"description": "Successfull result",
-							"schema": {
-								"$ref": "#/definitions/UserResponse"
-							}
-						}
-					},
-					"parameters": [
-						{
-							"required": false,
-							"type": "string",
-							"description": "number of objects returned per page. Max 24",
-							"in": "query",
-							"name": "count"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "Either dateJoined, -dateJoined, followerCount or -followerCount",
-							"in": "query",
-							"name": "sortBy"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "used for pagination",
-							"in": "query",
-							"name": "cursor"
-						}
-					],
-					"produces": [
-						"application/json"
-					]
+					"description": "Returns a list of users following you."
 				}
 			},
 			"/v3/search": {
@@ -26279,8 +26234,9 @@ return /******/ (function(modules) { // webpackBootstrap
 						{
 							"required": false,
 							"type": "string",
-							"name": "q",
-							"in": "query"
+							"description": "Space separated keywords.",
+							"in": "query",
+							"name": "q"
 						}
 					],
 					"description": "Search in models, collections, users"
@@ -26288,81 +26244,19 @@ return /******/ (function(modules) { // webpackBootstrap
 			},
 			"/v3/users/{uid}": {
 				"get": {
-					"description": "Returns details about a user",
+					"description": "Returns the detail of a user.",
 					"tags": [
 						"users"
 					],
 					"responses": {
 						"200": {
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/UserDetail"
-							},
-							"examples": {
-								"application/json": {
-									"response": {
-										"website": null,
-										"subscriptionCount": 0,
-										"followerCount": 0,
-										"uid": "53bac75dbbde4525b78f11e07e98c267",
-										"modelsUrl": "https://api.sketchfab.com/v3/models??user=bot",
-										"likeCount": 0,
-										"facebookUsername": null,
-										"biography": null,
-										"dateJoined": "2016-04-20T11:44:11.084906",
-										"city": null,
-										"account": "pro",
-										"displayName": "bot",
-										"profileUrl": "https://sketchfab.com/bot",
-										"followingsUrl": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267/followings",
-										"skills": [],
-										"tagline": null,
-										"uri": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267",
-										"modelCount": 1,
-										"username": "bot",
-										"linkedinUsername": null,
-										"likesUrl": "https://api.sketchfab.com/v3/models??liked_by=bot",
-										"followersUrl": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267/followers",
-										"collectionCount": 0,
-										"country": null,
-										"followingCount": 0,
-										"twitterUsername": null,
-										"collectionsUrl": "https://api.sketchfab.com/v3/collections??by=bot",
-										"avatar": {
-											"images": [
-												{
-													"url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/0f5f69d691a946df94e46f60ef2933cd.jpeg",
-													"width": 100,
-													"height": 100,
-													"size": 3011
-												},
-												{
-													"url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/91587bbdc9f349deab76f26ff440df5f.jpeg",
-													"width": 90,
-													"height": 90,
-													"size": 2657
-												},
-												{
-													"url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/f1919a08fcb04cb29cac88d7c052bbab.jpeg",
-													"width": 48,
-													"height": 48,
-													"size": 1243
-												},
-												{
-													"url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/3a459d2c418240e1afb9b48614e2b61f.jpeg",
-													"width": 32,
-													"height": 32,
-													"size": 776
-												}
-											],
-											"updatedAt": "2016-04-20T09:42:25.973491",
-											"uri": "https://api.sketchfab.com/v3/avatars/7c5b5af6f9174567a0295135a5b8b04f",
-											"createdAt": "2016-04-20T09:42:25.973491",
-											"name": "avatar-orange.jpg"
-										}
-									}
-								}
-							},
-							"description": "Successful response"
+							}
+						},
+						"404": {
+							"description": "Not Found"
 						}
 					},
 					"parameters": [
@@ -26378,17 +26272,92 @@ return /******/ (function(modules) { // webpackBootstrap
 					]
 				}
 			},
-			"/v3/licences/{uid}": {
+			"/v3/comments": {
+				"post": {
+					"security": [
+						{
+							"Token": []
+						}
+					],
+					"tags": [
+						"comments"
+					],
+					"responses": {
+						"201": {
+							"description": "Created"
+						},
+						"400": {
+							"description": "Bad Request"
+						},
+						"429": {
+							"description": "Enhance your calm"
+						}
+					},
+					"parameters": [
+						{
+							"required": true,
+							"in": "body",
+							"name": "body",
+							"schema": {
+								"$ref": "#/definitions/CommentPost"
+							}
+						}
+					],
+					"description": "Creates a comment"
+				},
 				"get": {
-					"produces": [
-						"application/json"
+					"tags": [
+						"comments"
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
-								"$ref": "#/definitions/LicencesDetail"
+								"$ref": "#/definitions/CommentResponse"
 							}
+						}
+					},
+					"parameters": [
+						{
+							"required": false,
+							"type": "string",
+							"description": "Retrieves comments of a model (urlid)",
+							"in": "query",
+							"name": "model"
+						},
+						{
+							"required": false,
+							"type": "string",
+							"description": "Retrieves comments of models tagged in category (uid)",
+							"in": "query",
+							"name": "category"
+						},
+						{
+							"required": false,
+							"type": "string",
+							"description": "Retrieves comments of a user (username)",
+							"in": "query",
+							"name": "user"
+						}
+					],
+					"description": "Returns a list of comments from public, published models"
+				}
+			},
+			"/v3/licences/{uid}": {
+				"get": {
+					"description": "Returns the detail of a license.",
+					"tags": [
+						"licenses"
+					],
+					"responses": {
+						"200": {
+							"description": "Success",
+							"schema": {
+								"$ref": "#/definitions/LicensesDetail"
+							}
+						},
+						"404": {
+							"description": "Not Found"
 						}
 					},
 					"parameters": [
@@ -26399,93 +26368,95 @@ return /******/ (function(modules) { // webpackBootstrap
 							"in": "path"
 						}
 					],
-					"description": "get the details of a particular licence available on sketchfab"
+					"produces": [
+						"application/json"
+					]
 				}
 			},
 			"/v3/models": {
 				"post": {
 					"responses": {
 						"201": {
+							"headers": {
+								"Location": {
+									"type": "string"
+								}
+							},
 							"description": "Created"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
 						}
 					},
 					"parameters": [
 						{
 							"required": false,
 							"type": "string",
-							"description": "model name",
+							"description": "Sets a name on the model (48 char max)",
 							"in": "formData",
 							"name": "name"
 						},
 						{
 							"required": false,
 							"type": "boolean",
-							"description": "this model should be private? (default false)",
+							"description": "Sets a model private (pro only)",
 							"in": "formData",
 							"name": "private"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "set a password on the model",
+							"description": "Sets a password to a model (pro only)",
 							"in": "formData",
 							"name": "password"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "name of an existing license",
+							"description": "Sets a license (label)",
 							"in": "formData",
-							"name": "licence"
+							"name": "license"
 						},
 						{
-							"required": false,
-							"type": "string",
-							"description": "comma separated list of tag slugs",
+							"description": "Sets tags to a model",
 							"in": "formData",
+							"items": {
+								"type": "string"
+							},
+							"required": false,
+							"type": "array",
 							"name": "tags"
 						},
 						{
-							"required": false,
-							"type": "string",
-							"description": "comma separated list of categories slug",
+							"description": "Sets categories (uid) to a model",
 							"in": "formData",
+							"items": {
+								"type": "string"
+							},
+							"required": false,
+							"type": "array",
 							"name": "categories"
 						},
 						{
 							"required": true,
 							"type": "file",
-							"description": "the actual model",
-							"in": "formData",
-							"name": "modelFile"
+							"name": "modelFile",
+							"in": "formData"
 						},
 						{
-							"required": false,
-							"type": "string",
-							"description": "the model file name",
+							"description": "Sets a model published after it is processed",
 							"in": "formData",
-							"name": "modelFileName"
-						},
-						{
+							"default": true,
 							"required": false,
 							"type": "boolean",
-							"description": "weither the model is published or not (default true)",
-							"in": "formData",
-							"name": "is_published"
+							"name": "isPublished"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "model description",
+							"description": "Sets a description on the model (1024 char max)",
 							"in": "formData",
 							"name": "description"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "json describing the options to use for the model. See \"/v3/models/{uid}/options\" endpoint.\n",
-							"in": "formData",
-							"name": "options"
 						}
 					],
 					"tags": [
@@ -26499,178 +26470,100 @@ return /******/ (function(modules) { // webpackBootstrap
 					"consumes": [
 						"multipart/form-data"
 					],
-					"description": "Upload a new model to the sketchfab platform. Despite other methods, upload must be issued using multipart/form-data\n"
+					"description": "Uploads a new model. Accepts multipart/form-data only."
 				},
 				"get": {
-					"description": "Returns list of model. Private, unpublished,\n  models cannot be retreived with this method.This endpoint is **paginated** by 24 models per pages.\n",
+					"description": "Returns a public, published list of models.",
 					"tags": [
 						"models"
 					],
 					"responses": {
 						"200": {
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/ModelResponse"
-							},
-							"examples": {
-								"application/json": {
-									"response": {
-										"next": "api.sketchfab.com/v3/models/cursor=azerty",
-										"results": [
-											{
-												"website": null,
-												"subscriptionCount": 0,
-												"followerCount": 0,
-												"uid": "53bac75dbbde4525b78f11e07e98c267",
-												"viewCount": 11,
-												"modelsUrl": "https://api.sketchfab.com/v3/models??user=bot",
-												"likeCount": 0,
-												"facebookUsername": null,
-												"biography": null,
-												"dateJoined": "2016-04-20T11:44:11.084906",
-												"city": null,
-												"account": "pro",
-												"displayName": "bot",
-												"profileUrl": "https://sketchfab.com/bot",
-												"followingsUrl": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267/followings",
-												"skills": [],
-												"tagline": null,
-												"uri": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267",
-												"modelCount": 1,
-												"username": "bot",
-												"linkedinUsername": null,
-												"likesUrl": "https://api.sketchfab.com/v3/models??liked_by=bot",
-												"followersUrl": "https://api.sketchfab.com/v3/users/53bac75dbbde4525b78f11e07e98c267/followers",
-												"collectionCount": 0,
-												"country": null,
-												"followingCount": 0,
-												"twitterUsername": null,
-												"collectionsUrl": "https://api.sketchfab.com/v3/collections??by=bot",
-												"avatar": {
-													"images": [
-														{
-															"url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/0f5f69d691a946df94e46f60ef2933cd.jpeg",
-															"width": 100,
-															"height": 100,
-															"size": 3011
-														},
-														{
-															"url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/91587bbdc9f349deab76f26ff440df5f.jpeg",
-															"width": 90,
-															"height": 90,
-															"size": 2657
-														},
-														{
-															"url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/f1919a08fcb04cb29cac88d7c052bbab.jpeg",
-															"width": 48,
-															"height": 48,
-															"size": 1243
-														},
-														{
-															"url": "https://media.sketchfab.com/avatars/7c5b5af6f9174567a0295135a5b8b04f/3a459d2c418240e1afb9b48614e2b61f.jpeg",
-															"width": 32,
-															"height": 32,
-															"size": 776
-														}
-													],
-													"updatedAt": "2016-04-20T09:42:25.973491",
-													"uri": "https://api.sketchfab.com/v3/avatars/7c5b5af6f9174567a0295135a5b8b04f",
-													"createdAt": "2016-04-20T09:42:25.973491",
-													"name": "avatar-orange.jpg"
-												}
-											}
-										],
-										"previous": null
-									}
-								}
-							},
-							"description": "Successful response"
-						},
-						"404": {
-							"description": "Not Found"
+							}
 						}
 					},
 					"parameters": [
 						{
 							"required": false,
 							"type": "string",
-							"description": "used for pagination",
-							"in": "query",
-							"name": "cursor"
-						},
-						{
-							"required": false,
-							"type": "integer",
-							"description": "pagination size. max 24",
-							"in": "query",
-							"name": "count"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "either createdAt, -createdAt, viewCount or -viewCount",
-							"in": "query",
-							"name": "sort_by"
+							"name": "sort_by",
+							"enum": [
+								"createdAt",
+								"-createdAt",
+								"viewCount",
+								"-viewCount"
+							],
+							"in": "query"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "a `username`. Retreives the models uploaded by `user`",
+							"description": "Retrieves models filtered by a user (username)",
 							"in": "query",
 							"name": "user"
 						},
 						{
-							"required": false,
-							"type": "string",
-							"description": "a tag slug. Retreives the models tagged with the query filter tags. If used multiple time, return models tagged with all the specified tags.",
+							"description": "Retrieves models filtered by tags (slug)",
 							"in": "query",
+							"items": {
+								"type": "string"
+							},
+							"required": false,
+							"type": "array",
 							"name": "tags"
 						},
 						{
-							"required": false,
-							"type": "string",
-							"description": "array of categories slug. Retreives the models in the specified categories",
+							"description": "Retrieves models filtered by categories (uid)",
 							"in": "query",
+							"items": {
+								"type": "string"
+							},
+							"required": false,
+							"type": "array",
 							"name": "categories"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "a username retreives the models liked by user",
+							"description": "Retrieves models liked by a user (username)",
 							"in": "query",
-							"name": "likedBy"
+							"name": "liked_by"
 						},
 						{
 							"required": false,
 							"type": "integer",
-							"name": "maxFaceCount",
+							"name": "max_face_count",
 							"in": "query"
 						},
 						{
 							"in": "query",
-							"description": "Retreives the models published after sinceDate",
+							"description": "Retrieves the models published after published_since (ISO 8601 format)",
 							"format": "date",
 							"required": false,
 							"type": "string",
-							"name": "publishedSince"
+							"name": "published_since"
 						},
 						{
 							"required": false,
 							"type": "boolean",
-							"description": "Retreives the models staffpicked",
+							"description": "Retrieves staffpicked models",
 							"in": "query",
 							"name": "staffpicked"
 						},
 						{
 							"required": false,
 							"type": "boolean",
-							"description": "Retreives the models that have a licence. (hence are downloadable)",
+							"description": "Retrieves downlodable models",
 							"in": "query",
 							"name": "downloadable"
 						},
 						{
 							"required": false,
 							"type": "boolean",
-							"description": "Retreives the models with an animation_count greater than 0.",
+							"description": "Retrieves animated models",
 							"in": "query",
 							"name": "animated"
 						}
@@ -26682,13 +26575,22 @@ return /******/ (function(modules) { // webpackBootstrap
 			},
 			"/v3/models/{uid}/options": {
 				"patch": {
-					"description": "Change a model options",
+					"description": "Updates the 3D options of a model",
 					"tags": [
 						"models"
 					],
 					"responses": {
 						"204": {
 							"description": "No-Content"
+						},
+						"400": {
+							"description": "Bad Request"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						},
+						"403": {
+							"description": "Permission Denied"
 						}
 					},
 					"parameters": [
@@ -26700,22 +26602,26 @@ return /******/ (function(modules) { // webpackBootstrap
 						},
 						{
 							"required": false,
-							"type": "string",
-							"description": "define the shadding type either lit or shadeless",
+							"description": "Defines the shading type",
 							"in": "formData",
+							"enum": [
+								"lit",
+								"shadeless"
+							],
+							"type": "string",
 							"name": "shading"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "define the background used. Either a color, an image, an environment or transparent. ex. {\"color\": \"#ffffff\"} or {\"environment\": \"aeff32435ffabcdd\"}\n",
+							"description": "Defines the background used. Either a color, a background, an environment or transparent. ex. {\"color\": \"#ffffff\"} or {\"environment\": \"{uid}\"}\n",
 							"in": "formData",
 							"name": "background"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "either a 4x4 matrix or an angle with an axis.\n",
+							"description": "Either a 4x4 matrix or an angle with an axis.",
 							"in": "formData",
 							"name": "orientation"
 						}
@@ -26727,34 +26633,21 @@ return /******/ (function(modules) { // webpackBootstrap
 			},
 			"/v3/me/followings": {
 				"post": {
-					"security": [
-						{
-							"Token": []
-						}
-					],
-					"tags": [
-						"me",
-						"users"
-					],
-					"responses": {
-						"204": {
-							"description": "Sucessfull add"
-						}
-					},
+					"description": "Follows a new user.",
 					"parameters": [
 						{
 							"required": true,
-							"type": "string",
-							"description": "the user uid you want to follow",
-							"in": "formData",
-							"name": "toUser"
+							"in": "body",
+							"description": "User (uid) to follow",
+							"name": "body",
+							"schema": {
+								"$ref": "#/definitions/UserFollowingPost"
+							}
 						}
 					],
 					"produces": [
 						"application/json"
-					]
-				},
-				"get": {
+					],
 					"security": [
 						{
 							"Token": []
@@ -26765,40 +26658,58 @@ return /******/ (function(modules) { // webpackBootstrap
 						"users",
 						"relationships"
 					],
+					"consumes": [
+						"application/json"
+					],
+					"responses": {
+						"204": {
+							"description": "No Content"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						}
+					}
+				},
+				"get": {
 					"responses": {
 						"200": {
-							"description": "Successfull result",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/UserResponse"
 							}
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
 						}
 					},
 					"parameters": [
 						{
 							"required": false,
 							"type": "string",
-							"description": "number of objects returned per page. Max 24",
-							"in": "query",
-							"name": "count"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "either dateJoined, -dateJoined, followerCount or -followerCount",
-							"in": "query",
-							"name": "sort_by"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "used for pagination",
-							"in": "query",
-							"name": "cursor"
+							"name": "sort_by",
+							"enum": [
+								"dateJoined",
+								"-dateJoined",
+								"followerCount",
+								"-followerCount"
+							],
+							"in": "query"
 						}
 					],
 					"produces": [
 						"application/json"
-					]
+					],
+					"security": [
+						{
+							"Token": []
+						}
+					],
+					"tags": [
+						"me",
+						"users",
+						"relationships"
+					],
+					"description": "Returns a list of users you follow."
 				}
 			},
 			"/v3/tags/{slug}": {
@@ -26808,7 +26719,7 @@ return /******/ (function(modules) { // webpackBootstrap
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/TagRelated"
 							}
@@ -26822,18 +26733,18 @@ return /******/ (function(modules) { // webpackBootstrap
 							"in": "path"
 						}
 					],
-					"description": "get detail about a tag"
+					"description": "Returns the detail of a tag"
 				}
 			},
 			"/v3/categories": {
 				"get": {
-					"description": "return the list of available categories",
+					"description": "Returns a list of categories",
 					"tags": [
 						"categories"
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/CategoriesResponse"
 							}
@@ -26843,22 +26754,12 @@ return /******/ (function(modules) { // webpackBootstrap
 						{
 							"required": false,
 							"type": "string",
-							"name": "cursor",
+							"name": "sort_by",
+							"enum": [
+								"slug",
+								"-slug"
+							],
 							"in": "query"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "number of objects returned per page. Max 24",
-							"in": "query",
-							"name": "count"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "either slug or -slug",
-							"in": "query",
-							"name": "sort_by"
 						}
 					],
 					"produces": [
@@ -26868,18 +26769,16 @@ return /******/ (function(modules) { // webpackBootstrap
 			},
 			"/v3/me/subscriptions": {
 				"post": {
-					"responses": {
-						"201": {
-							"description": "Sucessfull add"
-						}
-					},
+					"description": "Subscribes to a collection.",
 					"parameters": [
 						{
 							"required": true,
-							"type": "string",
-							"description": "the collection uid you want to subscribe",
-							"in": "formData",
-							"name": "collection"
+							"in": "body",
+							"description": "The collection (uid) to subscribe to",
+							"name": "body",
+							"schema": {
+								"$ref": "#/definitions/ModelCollectionPost"
+							}
 						}
 					],
 					"produces": [
@@ -26894,7 +26793,20 @@ return /******/ (function(modules) { // webpackBootstrap
 						"me",
 						"collections"
 					],
-					"description": "add a collection to your subscriptions"
+					"consumes": [
+						"application/json"
+					],
+					"responses": {
+						"201": {
+							"description": "Created"
+						},
+						"400": {
+							"description": "Bad Request"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						}
+					}
 				},
 				"get": {
 					"security": [
@@ -26902,13 +26814,16 @@ return /******/ (function(modules) { // webpackBootstrap
 							"Token": []
 						}
 					],
-					"description": "Return collections the user subscribed",
+					"description": "Returns collections you subscribed to.",
 					"responses": {
 						"200": {
-							"description": "Successfull result",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/CollectionResponse"
 							}
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
 						}
 					},
 					"tags": [
@@ -26927,60 +26842,36 @@ return /******/ (function(modules) { // webpackBootstrap
 							"Token": []
 						}
 					],
+					"description": "Returns a list of your models",
+					"responses": {
+						"200": {
+							"description": "Success",
+							"schema": {
+								"$ref": "#/definitions/ModelResponse"
+							}
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						}
+					},
 					"tags": [
 						"me",
 						"models"
 					],
-					"responses": {
-						"200": {
-							"description": "Successfull result",
-							"schema": {
-								"$ref": "#/definitions/ModelResponse"
-							}
-						}
-					},
 					"produces": [
 						"application/json"
 					]
 				}
 			},
 			"/v3/collections/{uid}": {
-				"put": {
-					"description": "adds/remove models to a collection",
-					"tags": [
-						"collections"
-					],
-					"responses": {
-						"204": {
-							"description": "No Content, Successful update of the collection"
-						}
-					},
-					"parameters": [
-						{
-							"required": true,
-							"type": "string",
-							"name": "uid",
-							"in": "path"
-						},
-						{
-							"required": true,
-							"in": "body",
-							"description": "list of models uids in the collection.",
-							"name": "models"
-						}
-					],
-					"produces": [
-						"application/json"
-					]
-				},
 				"get": {
-					"description": "Returns details about a collection",
+					"description": "Returns the detail of a collection",
 					"tags": [
 						"collections"
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/CollectionDetail"
 							}
@@ -26999,13 +26890,19 @@ return /******/ (function(modules) { // webpackBootstrap
 					]
 				},
 				"patch": {
-					"description": "adds/remove models to a collection",
+					"description": "Updates a collection",
 					"tags": [
 						"collections"
 					],
 					"responses": {
 						"204": {
-							"description": "No Content, Successful update of the collection"
+							"description": "No Content"
+						},
+						"400": {
+							"description": "Bad Request"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
 						}
 					},
 					"parameters": [
@@ -27018,8 +26915,10 @@ return /******/ (function(modules) { // webpackBootstrap
 						{
 							"required": true,
 							"in": "body",
-							"description": "list of models uids in the collection.",
-							"name": "models"
+							"name": "body",
+							"schema": {
+								"$ref": "#/definitions/CollectionPatch"
+							}
 						}
 					],
 					"produces": [
@@ -27029,18 +26928,15 @@ return /******/ (function(modules) { // webpackBootstrap
 			},
 			"/v3/me/likes": {
 				"post": {
-					"responses": {
-						"201": {
-							"description": "Model sucessfully liked"
-						}
-					},
+					"description": "Likes a model",
 					"parameters": [
 						{
 							"required": true,
-							"type": "string",
-							"description": "the model uid you want to like",
-							"in": "formData",
-							"name": "model"
+							"in": "body",
+							"name": "body",
+							"schema": {
+								"$ref": "#/definitions/LikeModelPost"
+							}
 						}
 					],
 					"produces": [
@@ -27055,7 +26951,17 @@ return /******/ (function(modules) { // webpackBootstrap
 						"me",
 						"models"
 					],
-					"description": "like a model"
+					"consumes": [
+						"application/json"
+					],
+					"responses": {
+						"201": {
+							"description": "Created"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						}
+					}
 				},
 				"get": {
 					"security": [
@@ -27070,7 +26976,7 @@ return /******/ (function(modules) { // webpackBootstrap
 					],
 					"responses": {
 						"200": {
-							"description": "Successfull result",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/UserResponse"
 							}
@@ -27082,18 +26988,27 @@ return /******/ (function(modules) { // webpackBootstrap
 				}
 			},
 			"/v3/collections/{uid}/models": {
-				"get": {
-					"description": "returns models of a collection",
+				"post": {
+					"description": "Adds models to a collection.",
 					"tags": [
 						"collections",
 						"models"
 					],
 					"responses": {
-						"200": {
-							"description": "Successful response",
-							"schema": {
-								"$ref": "#/definitions/CollectionModelResponse"
-							}
+						"201": {
+							"description": "Success"
+						},
+						"400": {
+							"description": "Bad Request"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						},
+						"403": {
+							"description": "Permission Denied"
+						},
+						"404": {
+							"description": "Not found"
 						}
 					},
 					"parameters": [
@@ -27104,10 +27019,81 @@ return /******/ (function(modules) { // webpackBootstrap
 							"in": "path"
 						},
 						{
-							"required": false,
+							"required": true,
+							"in": "body",
+							"name": "body",
+							"schema": {
+								"$ref": "#/definitions/CollectionModelPost"
+							}
+						}
+					],
+					"produces": [
+						"application/json"
+					]
+				},
+				"get": {
+					"description": "Returns a list of models for a collection",
+					"tags": [
+						"collections",
+						"models"
+					],
+					"responses": {
+						"200": {
+							"description": "Success",
+							"schema": {
+								"$ref": "#/definitions/CollectionModelResponse"
+							}
+						},
+						"404": {
+							"description": "Not found"
+						}
+					},
+					"parameters": [
+						{
+							"required": true,
 							"type": "string",
-							"name": "cursor",
-							"in": "query"
+							"name": "uid",
+							"in": "path"
+						}
+					],
+					"produces": [
+						"application/json"
+					]
+				},
+				"delete": {
+					"description": "Removes models from a collection",
+					"tags": [
+						"collections",
+						"models"
+					],
+					"responses": {
+						"204": {
+							"description": "Success"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						},
+						"403": {
+							"description": "Permission Denied"
+						},
+						"404": {
+							"description": "Not found"
+						}
+					},
+					"parameters": [
+						{
+							"required": true,
+							"type": "string",
+							"name": "uid",
+							"in": "path"
+						},
+						{
+							"required": true,
+							"in": "body",
+							"name": "body",
+							"schema": {
+								"$ref": "#/definitions/CollectionModelPost"
+							}
 						}
 					],
 					"produces": [
@@ -27119,15 +27105,22 @@ return /******/ (function(modules) { // webpackBootstrap
 				"delete": {
 					"responses": {
 						"204": {
-							"description": "Sucessfull delete"
+							"description": "No Content"
+						},
+						"400": {
+							"description": "Bad Request"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
 						}
 					},
 					"parameters": [
 						{
 							"required": true,
 							"type": "string",
-							"name": "uid",
-							"in": "path"
+							"description": "Model (uid) to un-like",
+							"in": "path",
+							"name": "uid"
 						}
 					],
 					"produces": [
@@ -27143,26 +27136,25 @@ return /******/ (function(modules) { // webpackBootstrap
 						"me",
 						"likes"
 					],
-					"description": "un-like a model"
+					"description": "Un-likes a model"
 				}
 			},
 			"/v3/me/environments": {
 				"post": {
-					"description": "Create a new environment. You need to have a pro account for doing this",
+					"description": "Creates an environment (pro only). Accepts multipart/form-data only.",
 					"parameters": [
 						{
 							"required": true,
 							"type": "string",
-							"description": "the environment name",
+							"description": "Sets a name on the environment (64 char max)",
 							"in": "formData",
 							"name": "name"
 						},
 						{
 							"required": true,
 							"type": "file",
-							"description": "the environment file you wich to upload",
-							"in": "formData",
-							"name": "environmentFile"
+							"name": "environmentFile",
+							"in": "formData"
 						}
 					],
 					"produces": [
@@ -27182,7 +27174,13 @@ return /******/ (function(modules) { // webpackBootstrap
 					],
 					"responses": {
 						"201": {
-							"description": "Sucessfully Created"
+							"description": "Created"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						},
+						"403": {
+							"description": "Permission Denied"
 						}
 					}
 				},
@@ -27192,13 +27190,16 @@ return /******/ (function(modules) { // webpackBootstrap
 							"Token": []
 						}
 					],
-					"description": "list available environments (default environments and yours)",
+					"description": "Returns available environments for your models.",
 					"responses": {
 						"200": {
-							"description": "Successfull result",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/EnvironmentResponse"
 							}
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
 						}
 					},
 					"tags": [
@@ -27210,36 +27211,49 @@ return /******/ (function(modules) { // webpackBootstrap
 					]
 				}
 			},
-			"/v3/licenses": {
-				"get": {
-					"produces": [
-						"application/json"
+			"/v3/comments/{uid}": {
+				"delete": {
+					"security": [
+						{
+							"Token": []
+						}
+					],
+					"tags": [
+						"comments"
 					],
 					"responses": {
-						"200": {
-							"description": "Successful response",
-							"schema": {
-								"$ref": "#definitions/LicencesResponse"
-							}
+						"204": {
+							"description": "No Content"
 						}
 					},
 					"parameters": [
 						{
-							"required": false,
+							"required": true,
 							"type": "string",
-							"description": "used for pagination",
-							"in": "query",
-							"name": "cursor"
-						},
-						{
-							"required": false,
-							"type": "integer",
-							"description": "pagination size. max 24",
-							"in": "query",
-							"name": "count"
+							"name": "uid",
+							"in": "path"
 						}
 					],
-					"description": "get the available licences on sketchfab"
+					"description": "Deletes one of your comments"
+				}
+			},
+			"/v3/licenses": {
+				"get": {
+					"description": "Returns a list of licenses",
+					"tags": [
+						"licenses"
+					],
+					"responses": {
+						"200": {
+							"description": "Success",
+							"schema": {
+								"$ref": "#/definitions/LicensesResponse"
+							}
+						}
+					},
+					"produces": [
+						"application/json"
+					]
 				}
 			},
 			"/v3/search?type=users": {
@@ -27250,59 +27264,71 @@ return /******/ (function(modules) { // webpackBootstrap
 					],
 					"responses": {
 						"200": {
-							"description": "Users matching the search",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/UserSearchResponse"
 							}
+						},
+						"400": {
+							"description": "Bad Request"
 						}
 					},
 					"parameters": [
 						{
 							"required": false,
 							"type": "string",
-							"name": "q",
-							"in": "query"
+							"description": "Space separated keywords",
+							"in": "query",
+							"name": "q"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"name": "username",
-							"in": "query"
+							"description": "Searches users by username",
+							"in": "query",
+							"name": "username"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "either country or city",
+							"description": "Searches users by country or city",
 							"in": "query",
 							"name": "location"
 						},
 						{
 							"required": false,
-							"type": "string",
-							"description": "either free, pro, biz",
+							"description": "Searches users by account type",
 							"in": "query",
+							"enum": [
+								"free",
+								"pro",
+								"biz"
+							],
+							"type": "string",
 							"name": "account"
 						},
 						{
+							"description": "Searches users by skills (slug)",
+							"in": "query",
+							"items": {
+								"type": "string"
+							},
 							"required": false,
 							"type": "array",
-							"description": "skills slugs",
-							"in": "query",
 							"name": "skills"
 						},
 						{
 							"required": false,
 							"type": "string",
-							"description": "slug of a segment",
-							"in": "query",
-							"name": "segment"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"description": "either followerCount, -followerCount, modelCount, -modelCount or username",
-							"in": "query",
-							"name": "sort_by"
+							"name": "sort_by",
+							"enum": [
+								"followerCount",
+								"-followerCount",
+								"modelCount",
+								"-modelCount",
+								"username"
+							],
+							"in": "query"
 						}
 					],
 					"description": "Search and filters in users"
@@ -27310,13 +27336,13 @@ return /******/ (function(modules) { // webpackBootstrap
 			},
 			"/v3/categories/{uid}": {
 				"get": {
-					"description": "return details about a category",
+					"description": "Return the details of a category",
 					"tags": [
 						"categories"
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/CategoriesRelated"
 							}
@@ -27337,13 +27363,13 @@ return /******/ (function(modules) { // webpackBootstrap
 			},
 			"/v3/skills": {
 				"get": {
-					"description": "return a list of available skills",
+					"description": "Returns the list of skills",
 					"tags": [
 						"skills"
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/SkillsResponse"
 							}
@@ -27361,35 +27387,23 @@ return /******/ (function(modules) { // webpackBootstrap
 					],
 					"responses": {
 						"200": {
-							"description": "get a list of tags",
+							"description": "Returns the list of tags",
 							"schema": {
 								"$ref": "#/definitions/TagsResponse"
 							}
 						}
 					},
-					"parameters": [
-						{
-							"required": false,
-							"type": "string",
-							"name": "cursor",
-							"in": "query"
-						}
-					],
-					"description": "Successful response"
+					"description": "Success"
 				}
 			},
 			"/v3/me/background": {
 				"post": {
-					"responses": {
-						"201": {
-							"description": "Create a new background (needs to be have a pro account"
-						}
-					},
+					"description": "Creates a new background (pro only). Accepts multipart/form-data only.",
 					"parameters": [
 						{
 							"required": true,
 							"type": "file",
-							"description": "the image background",
+							"description": "Max 4mb",
 							"in": "formData",
 							"name": "image"
 						}
@@ -27408,9 +27422,46 @@ return /******/ (function(modules) { // webpackBootstrap
 					],
 					"consumes": [
 						"multipart/form-data"
-					]
+					],
+					"responses": {
+						"201": {
+							"description": "Created"
+						},
+						"400": {
+							"description": "Bad Request"
+						},
+						"401": {
+							"description": "Authentication credentials were not provided or do not match"
+						},
+						"403": {
+							"description": "Permission Denied"
+						}
+					}
 				},
 				"get": {
+					"responses": {
+						"200": {
+							"description": "Success",
+							"schema": {
+								"$ref": "#/definitions/BackgroundResponse"
+							}
+						}
+					},
+					"parameters": [
+						{
+							"required": false,
+							"type": "string",
+							"name": "sort_by",
+							"enum": [
+								"createdAt",
+								"-createdAt"
+							],
+							"in": "query"
+						}
+					],
+					"produces": [
+						"application/json"
+					],
 					"security": [
 						{
 							"Token": []
@@ -27421,44 +27472,18 @@ return /******/ (function(modules) { // webpackBootstrap
 						"models",
 						"backgrounds"
 					],
-					"responses": {
-						"200": {
-							"description": "Successfull result",
-							"schema": {
-								"$ref": "#/definitions/BackgroundResponse"
-							}
-						}
-					},
-					"parameters": [
-						{
-							"required": false,
-							"type": "string",
-							"description": "either createdAt or -createdAt",
-							"in": "query",
-							"name": "sort_by"
-						},
-						{
-							"required": false,
-							"type": "integer",
-							"description": "pagination size. max 24",
-							"in": "query",
-							"name": "count"
-						}
-					],
-					"produces": [
-						"application/json"
-					]
+					"description": "Returns available backgrounds for your models"
 				}
 			},
 			"/v3/collections/thumbnails": {
 				"get": {
 					"tags": [
-						"collection",
+						"collections",
 						"thumbnails"
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/CollectionsThumbnailsResponse"
 							}
@@ -27466,28 +27491,34 @@ return /******/ (function(modules) { // webpackBootstrap
 					},
 					"parameters": [
 						{
+							"items": {
+								"type": "string"
+							},
 							"required": true,
 							"type": "array",
 							"name": "uids",
 							"in": "query"
 						}
 					],
-					"description": "returns the thumbnails of the three most popular model for each collection"
+					"description": "Returns the popular thumbnails of collections"
 				}
 			},
 			"/v3/users/{uid}/followings": {
 				"get": {
-					"description": "Returns users followed by a particular user",
+					"description": "Returns users followed by a user.",
 					"tags": [
 						"users",
 						"relationships"
 					],
 					"responses": {
 						"200": {
-							"description": "Successful response",
+							"description": "Success",
 							"schema": {
 								"$ref": "#/definitions/UserResponse"
 							}
+						},
+						"404": {
+							"description": "Not Found"
 						}
 					},
 					"parameters": [
@@ -27496,12 +27527,6 @@ return /******/ (function(modules) { // webpackBootstrap
 							"type": "string",
 							"name": "uid",
 							"in": "path"
-						},
-						{
-							"required": false,
-							"type": "string",
-							"name": "cursor",
-							"in": "query"
 						}
 					],
 					"produces": [
@@ -27717,22 +27742,36 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 				}
 			},
+			"EnvironmentPatch": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				}
+			},
 			"AvatarRelated": {
 				"type": "object",
 				"properties": {
-					"image": {
-						"type": "string"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date"
-					},
-					"name": {
-						"type": "string"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date"
+					"images": {
+						"items": {
+							"type": "object",
+							"properties": {
+								"url": {
+									"type": "string"
+								},
+								"width": {
+									"type": "integer"
+								},
+								"uid": {
+									"type": "string"
+								},
+								"height": {
+									"type": "integer"
+								}
+							}
+						},
+						"type": "array"
 					},
 					"uri": {
 						"type": "string"
@@ -27742,23 +27781,11 @@ return /******/ (function(modules) { // webpackBootstrap
 			"UserSearchResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/UserSearchList"
 						},
 						"type": "array"
-					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
 					}
 				}
 			},
@@ -27776,19 +27803,96 @@ return /******/ (function(modules) { // webpackBootstrap
 			"EnvironmentResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/Environment"
 						},
 						"type": "array"
+					}
+				}
+			},
+			"MePatch": {
+				"type": "object",
+				"properties": {
+					"website": {
+						"type": [
+							"string",
+							"null"
+						]
 					},
-					"next": {
+					"city": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"displayName": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"skills": {
+						"type": [
+							"array",
+							"null"
+						]
+					},
+					"country": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"password_confirmation": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"linkedinUsername": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"interest": {
+						"type": [
+							"array",
+							"null"
+						]
+					},
+					"tagline": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"twitterUsername": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"password": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"facebookUsername": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"email": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"biography": {
 						"type": [
 							"string",
 							"null"
@@ -27876,6 +27980,26 @@ return /******/ (function(modules) { // webpackBootstrap
 						"type": "array"
 					},
 					"uri": {
+						"type": "string"
+					}
+				}
+			},
+			"LicensesDetail": {
+				"type": "object",
+				"properties": {
+					"url": {
+						"type": "string"
+					},
+					"fullName": {
+						"type": "string"
+					},
+					"requirements": {
+						"type": "string"
+					},
+					"uri": {
+						"type": "string"
+					},
+					"label": {
 						"type": "string"
 					}
 				}
@@ -28003,46 +28127,50 @@ return /******/ (function(modules) { // webpackBootstrap
 			"ModelResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/ModelList"
 						},
 						"type": "array"
+					}
+				}
+			},
+			"CollectionPatch": {
+				"type": "object",
+				"properties": {
+					"models": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
 					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
+					"name": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
 					}
 				}
 			},
 			"BackgroundResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/BackgroundList"
 						},
 						"type": "array"
+					}
+				}
+			},
+			"CommentPost": {
+				"type": "object",
+				"properties": {
+					"body": {
+						"type": "string"
 					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
+					"model": {
+						"type": "string"
 					}
 				}
 			},
@@ -28166,26 +28294,6 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 				}
 			},
-			"Licences": {
-				"type": "object",
-				"properties": {
-					"url": {
-						"type": "string"
-					},
-					"fullName": {
-						"type": "string"
-					},
-					"requirements": {
-						"type": "string"
-					},
-					"uri": {
-						"type": "string"
-					},
-					"label": {
-						"type": "string"
-					}
-				}
-			},
 			"CollectionPost": {
 				"type": "object",
 				"properties": {
@@ -28203,26 +28311,22 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 				}
 			},
+			"ModelCollectionPost": {
+				"type": "object",
+				"properties": {
+					"collection": {
+						"type": "string"
+					}
+				}
+			},
 			"CollectionSearchResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/CollectionSearchList"
 						},
 						"type": "array"
-					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
 					}
 				}
 			},
@@ -28237,49 +28341,14 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 				}
 			},
-			"LicencesResponse": {
-				"type": "object",
-				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"results": {
-						"items": {
-							"$ref": "#/definitions/Licences"
-						},
-						"type": "array"
-					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
-					}
-				}
-			},
 			"CollectionModelResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/ModelList"
 						},
 						"type": "array"
-					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
 					}
 				}
 			},
@@ -28298,6 +28367,9 @@ return /******/ (function(modules) { // webpackBootstrap
 						},
 						"type": "array"
 					},
+					"viewerUrl": {
+						"type": "string"
+					},
 					"publishedAt": {
 						"type": "string",
 						"format": "date"
@@ -28306,6 +28378,9 @@ return /******/ (function(modules) { // webpackBootstrap
 						"type": "integer"
 					},
 					"commentCount": {
+						"type": "integer"
+					},
+					"vertexCount": {
 						"type": "integer"
 					},
 					"user": {
@@ -28357,115 +28432,44 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 				}
 			},
-			"MePatch": {
+			"LikeModelPost": {
 				"type": "object",
 				"properties": {
-					"website": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"city": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"displayName": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"skills": {
-						"type": [
-							"array",
-							"null"
-						]
-					},
-					"country": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"password_confirmation": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"linkedinUsername": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"interest": {
-						"type": [
-							"array",
-							"null"
-						]
-					},
-					"tagline": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"twitterUsername": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"password": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"facebookUsername": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"email": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
-					"biography": {
-						"type": [
-							"string",
-							"null"
-						]
+					"model": {
+						"type": "string"
+					}
+				}
+			},
+			"LicensesResponse": {
+				"type": "object",
+				"properties": {
+					"results": {
+						"items": {
+							"$ref": "#/definitions/Licenses"
+						},
+						"type": "array"
+					}
+				}
+			},
+			"CollectionModelPost": {
+				"type": "object",
+				"properties": {
+					"models": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
 					}
 				}
 			},
 			"TagsResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/TagRelated"
 						},
 						"type": "array"
-					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
 					}
 				}
 			},
@@ -28613,9 +28617,8 @@ return /******/ (function(modules) { // webpackBootstrap
 					"animationCount": {
 						"type": "integer"
 					},
-					"createdAt": {
-						"type": "string",
-						"format": "date"
+					"isDownloadable": {
+						"type": "boolean"
 					},
 					"description": {
 						"type": [
@@ -28626,8 +28629,8 @@ return /******/ (function(modules) { // webpackBootstrap
 					"viewCount": {
 						"type": "integer"
 					},
-					"thumbnails": {
-						"$ref": "#/definitions/ThumbnailsRelated"
+					"name": {
+						"type": "string"
 					},
 					"license": {
 						"type": "object"
@@ -28637,18 +28640,6 @@ return /******/ (function(modules) { // webpackBootstrap
 					},
 					"uri": {
 						"type": "string"
-					},
-					"archiveSize": {
-						"type": "integer"
-					},
-					"name": {
-						"type": "string"
-					},
-					"originalFileName": {
-						"type": [
-							"object",
-							"null"
-						]
 					},
 					"faceCount": {
 						"type": "integer"
@@ -28666,8 +28657,12 @@ return /******/ (function(modules) { // webpackBootstrap
 						],
 						"format": "date"
 					},
-					"isDownloadable": {
-						"type": "boolean"
+					"createdAt": {
+						"type": "string",
+						"format": "date"
+					},
+					"thumbnails": {
+						"$ref": "#/definitions/ThumbnailsRelated"
 					},
 					"downloadCount": {
 						"type": "integer"
@@ -28686,6 +28681,9 @@ return /******/ (function(modules) { // webpackBootstrap
 					"name": {
 						"type": "string"
 					},
+					"license": {
+						"type": "string"
+					},
 					"tags": {
 						"items": {
 							"type": "string"
@@ -28701,15 +28699,8 @@ return /******/ (function(modules) { // webpackBootstrap
 					"source": {
 						"type": "string"
 					},
-					"licence": {
-						"type": "string"
-					},
 					"password": {
 						"type": "string"
-					},
-					"options": {
-						"type": "string",
-						"description": "json describing the options to use for the model. See \"/v3/models/{uid}/options\" endpoint.\n"
 					},
 					"categories": {
 						"items": {
@@ -28719,6 +28710,14 @@ return /******/ (function(modules) { // webpackBootstrap
 					},
 					"is_published": {
 						"type": "boolean"
+					}
+				}
+			},
+			"UserFollowingPost": {
+				"type": "object",
+				"properties": {
+					"toUser": {
+						"type": "string"
 					}
 				}
 			},
@@ -28753,23 +28752,11 @@ return /******/ (function(modules) { // webpackBootstrap
 			"CategoriesResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/CategoriesRelated"
 						},
 						"type": "array"
-					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
 					}
 				}
 			},
@@ -28816,23 +28803,11 @@ return /******/ (function(modules) { // webpackBootstrap
 			"ModelSearchResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/ModelSearchList"
 						},
 						"type": "array"
-					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
 					}
 				}
 			},
@@ -28866,26 +28841,6 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 				}
 			},
-			"LicencesDetail": {
-				"type": "object",
-				"properties": {
-					"url": {
-						"type": "string"
-					},
-					"fullName": {
-						"type": "string"
-					},
-					"requirements": {
-						"type": "string"
-					},
-					"uri": {
-						"type": "string"
-					},
-					"label": {
-						"type": "string"
-					}
-				}
-			},
 			"BackgroundList": {
 				"type": "object",
 				"properties": {
@@ -28914,46 +28869,22 @@ return /******/ (function(modules) { // webpackBootstrap
 			"CollectionResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/CollectionList"
 						},
 						"type": "array"
-					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
 					}
 				}
 			},
 			"UserResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/UserList"
 						},
 						"type": "array"
-					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
 					}
 				}
 			},
@@ -29006,23 +28937,11 @@ return /******/ (function(modules) { // webpackBootstrap
 			"SkillsResponse": {
 				"type": "object",
 				"properties": {
-					"previous": {
-						"type": [
-							"string",
-							"null"
-						]
-					},
 					"results": {
 						"items": {
 							"$ref": "#/definitions/SkillDetail"
 						},
 						"type": "array"
-					},
-					"next": {
-						"type": [
-							"string",
-							"null"
-						]
 					}
 				}
 			},
@@ -29060,6 +28979,54 @@ return /******/ (function(modules) { // webpackBootstrap
 					},
 					"metadata": {
 						"type": "object"
+					}
+				}
+			},
+			"Licenses": {
+				"type": "object",
+				"properties": {
+					"url": {
+						"type": "string"
+					},
+					"fullName": {
+						"type": "string"
+					},
+					"requirements": {
+						"type": "string"
+					},
+					"uri": {
+						"type": "string"
+					},
+					"label": {
+						"type": "string"
+					}
+				}
+			},
+			"CommentResponse": {
+				"type": "object",
+				"properties": {
+					"body": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date"
+					},
+					"uid": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date"
+					},
+					"uri": {
+						"type": "string"
+					},
+					"isDeleted": {
+						"type": "boolean"
+					},
+					"user": {
+						"$ref": "#/definitions/UserRelated"
 					}
 				}
 			}
