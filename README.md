@@ -26,6 +26,8 @@ api.then( function ( client ) {
 } );
 ```
 
+See the official [Sketchfab Data API documentation](https://sketchfab.com/developers/data-api/v3) for more details on available endpoints.
+
 ## Build the browser library
 
 * `npm install -g webpack`
