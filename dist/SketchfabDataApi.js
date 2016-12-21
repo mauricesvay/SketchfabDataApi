@@ -55,7 +55,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var Swagger = __webpack_require__( 1 );
-	var spec = __webpack_require__( 165 );
+	var spec = __webpack_require__( 166 );
 	
 	function SketchfabDataApi() {
 	    return new Swagger( null, {
@@ -1732,7 +1732,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
+	/* WEBPACK VAR INJECTION */(function(global) {/*!
 	 * The buffer module from node.js, for the browser.
 	 *
 	 * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
@@ -3522,7 +3522,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return val !== val // eslint-disable-line no-self-compare
 	}
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(34).Buffer, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
 /* 35 */
@@ -4504,10 +4504,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var helpers = __webpack_require__(3);
 	var Model = __webpack_require__(116);
 	var Operation = __webpack_require__(153);
-	var OperationGroup = __webpack_require__(162);
-	var Resolver = __webpack_require__(163);
+	var OperationGroup = __webpack_require__(163);
+	var Resolver = __webpack_require__(164);
 	var SwaggerHttp = __webpack_require__(154);
-	var SwaggerSpecConverter = __webpack_require__(164);
+	var SwaggerSpecConverter = __webpack_require__(165);
 	var Q = __webpack_require__(160);
 	
 	// We have to keep track of the function/property names to avoid collisions for tag names which are used to allow the
@@ -19787,7 +19787,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	
 	  obj.on.response = function(data) {
-	    responseInterceptor(data);
+	    if(data && data.status >= 400) {
+	      errorInterceptor(data);
+	    }
+	    else {
+	      responseInterceptor(data);
+	    }
 	  };
 	
 	  if (_.isObject(obj) && _.isObject(obj.body)) {
@@ -23712,11 +23717,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 161 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(4).nextTick;
 	var apply = Function.prototype.apply;
-	var slice = Array.prototype.slice;
-	var immediateIds = {};
-	var nextImmediateId = 0;
 	
 	// DOM APIs, for completeness
 	
@@ -23727,7 +23728,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return new Timeout(apply.call(setInterval, window, arguments), clearInterval);
 	};
 	exports.clearTimeout =
-	exports.clearInterval = function(timeout) { timeout.close(); };
+	exports.clearInterval = function(timeout) {
+	  if (timeout) {
+	    timeout.close();
+	  }
+	};
 	
 	function Timeout(id, clearFn) {
 	  this._id = id;
@@ -23761,37 +23766,207 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	};
 	
-	// That's not how node.js implements it but the exposed api is the same.
-	exports.setImmediate = typeof setImmediate === "function" ? setImmediate : function(fn) {
-	  var id = nextImmediateId++;
-	  var args = arguments.length < 2 ? false : slice.call(arguments, 1);
-	
-	  immediateIds[id] = true;
-	
-	  nextTick(function onNextTick() {
-	    if (immediateIds[id]) {
-	      // fn.call() is faster so we optimize for the common use-case
-	      // @see http://jsperf.com/call-apply-segu
-	      if (args) {
-	        fn.apply(null, args);
-	      } else {
-	        fn.call(null);
-	      }
-	      // Prevent ids from leaking
-	      exports.clearImmediate(id);
-	    }
-	  });
-	
-	  return id;
-	};
-	
-	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
-	  delete immediateIds[id];
-	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(161).setImmediate, __webpack_require__(161).clearImmediate))
+	// setimmediate attaches itself to the global object
+	__webpack_require__(162);
+	exports.setImmediate = setImmediate;
+	exports.clearImmediate = clearImmediate;
+
 
 /***/ },
 /* 162 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
+	    "use strict";
+	
+	    if (global.setImmediate) {
+	        return;
+	    }
+	
+	    var nextHandle = 1; // Spec says greater than zero
+	    var tasksByHandle = {};
+	    var currentlyRunningATask = false;
+	    var doc = global.document;
+	    var registerImmediate;
+	
+	    function setImmediate(callback) {
+	      // Callback can either be a function or a string
+	      if (typeof callback !== "function") {
+	        callback = new Function("" + callback);
+	      }
+	      // Copy function arguments
+	      var args = new Array(arguments.length - 1);
+	      for (var i = 0; i < args.length; i++) {
+	          args[i] = arguments[i + 1];
+	      }
+	      // Store and register the task
+	      var task = { callback: callback, args: args };
+	      tasksByHandle[nextHandle] = task;
+	      registerImmediate(nextHandle);
+	      return nextHandle++;
+	    }
+	
+	    function clearImmediate(handle) {
+	        delete tasksByHandle[handle];
+	    }
+	
+	    function run(task) {
+	        var callback = task.callback;
+	        var args = task.args;
+	        switch (args.length) {
+	        case 0:
+	            callback();
+	            break;
+	        case 1:
+	            callback(args[0]);
+	            break;
+	        case 2:
+	            callback(args[0], args[1]);
+	            break;
+	        case 3:
+	            callback(args[0], args[1], args[2]);
+	            break;
+	        default:
+	            callback.apply(undefined, args);
+	            break;
+	        }
+	    }
+	
+	    function runIfPresent(handle) {
+	        // From the spec: "Wait until any invocations of this algorithm started before this one have completed."
+	        // So if we're currently running a task, we'll need to delay this invocation.
+	        if (currentlyRunningATask) {
+	            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
+	            // "too much recursion" error.
+	            setTimeout(runIfPresent, 0, handle);
+	        } else {
+	            var task = tasksByHandle[handle];
+	            if (task) {
+	                currentlyRunningATask = true;
+	                try {
+	                    run(task);
+	                } finally {
+	                    clearImmediate(handle);
+	                    currentlyRunningATask = false;
+	                }
+	            }
+	        }
+	    }
+	
+	    function installNextTickImplementation() {
+	        registerImmediate = function(handle) {
+	            process.nextTick(function () { runIfPresent(handle); });
+	        };
+	    }
+	
+	    function canUsePostMessage() {
+	        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+	        // where `global.postMessage` means something completely different and can't be used for this purpose.
+	        if (global.postMessage && !global.importScripts) {
+	            var postMessageIsAsynchronous = true;
+	            var oldOnMessage = global.onmessage;
+	            global.onmessage = function() {
+	                postMessageIsAsynchronous = false;
+	            };
+	            global.postMessage("", "*");
+	            global.onmessage = oldOnMessage;
+	            return postMessageIsAsynchronous;
+	        }
+	    }
+	
+	    function installPostMessageImplementation() {
+	        // Installs an event handler on `global` for the `message` event: see
+	        // * https://developer.mozilla.org/en/DOM/window.postMessage
+	        // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
+	
+	        var messagePrefix = "setImmediate$" + Math.random() + "$";
+	        var onGlobalMessage = function(event) {
+	            if (event.source === global &&
+	                typeof event.data === "string" &&
+	                event.data.indexOf(messagePrefix) === 0) {
+	                runIfPresent(+event.data.slice(messagePrefix.length));
+	            }
+	        };
+	
+	        if (global.addEventListener) {
+	            global.addEventListener("message", onGlobalMessage, false);
+	        } else {
+	            global.attachEvent("onmessage", onGlobalMessage);
+	        }
+	
+	        registerImmediate = function(handle) {
+	            global.postMessage(messagePrefix + handle, "*");
+	        };
+	    }
+	
+	    function installMessageChannelImplementation() {
+	        var channel = new MessageChannel();
+	        channel.port1.onmessage = function(event) {
+	            var handle = event.data;
+	            runIfPresent(handle);
+	        };
+	
+	        registerImmediate = function(handle) {
+	            channel.port2.postMessage(handle);
+	        };
+	    }
+	
+	    function installReadyStateChangeImplementation() {
+	        var html = doc.documentElement;
+	        registerImmediate = function(handle) {
+	            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+	            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+	            var script = doc.createElement("script");
+	            script.onreadystatechange = function () {
+	                runIfPresent(handle);
+	                script.onreadystatechange = null;
+	                html.removeChild(script);
+	                script = null;
+	            };
+	            html.appendChild(script);
+	        };
+	    }
+	
+	    function installSetTimeoutImplementation() {
+	        registerImmediate = function(handle) {
+	            setTimeout(runIfPresent, 0, handle);
+	        };
+	    }
+	
+	    // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
+	    var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
+	    attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
+	
+	    // Don't get fooled by e.g. browserify environments.
+	    if ({}.toString.call(global.process) === "[object process]") {
+	        // For Node.js before 0.9
+	        installNextTickImplementation();
+	
+	    } else if (canUsePostMessage()) {
+	        // For non-IE10 modern browsers
+	        installPostMessageImplementation();
+	
+	    } else if (global.MessageChannel) {
+	        // For web workers, where supported
+	        installMessageChannelImplementation();
+	
+	    } else if (doc && "onreadystatechange" in doc.createElement("script")) {
+	        // For IE 6–8
+	        installReadyStateChangeImplementation();
+	
+	    } else {
+	        // For older browsers
+	        installSetTimeoutImplementation();
+	    }
+	
+	    attachTo.setImmediate = setImmediate;
+	    attachTo.clearImmediate = clearImmediate;
+	}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(4)))
+
+/***/ },
+/* 163 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -23813,7 +23988,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 163 */
+/* 164 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -24729,7 +24904,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 164 */
+/* 165 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25386,7 +25561,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 165 */
+/* 166 */
 /***/ function(module, exports) {
 
 	module.exports = {
@@ -25698,6 +25873,13 @@ return /******/ (function(modules) { // webpackBootstrap
 							"required": false,
 							"type": "string",
 							"name": "created_since"
+						},
+						{
+							"required": false,
+							"type": "boolean",
+							"description": "Retrieves restricted collections (off by default)",
+							"in": "query",
+							"name": "restricted"
 						},
 						{
 							"required": false,
@@ -26488,15 +26670,18 @@ return /******/ (function(modules) { // webpackBootstrap
 					"parameters": [
 						{
 							"required": false,
-							"type": "string",
-							"name": "sort_by",
+							"description": "Sorts results (likedAt is only usable with liked_by).",
+							"in": "query",
 							"enum": [
 								"createdAt",
 								"-createdAt",
 								"viewCount",
-								"-viewCount"
+								"-viewCount",
+								"likedAt",
+								"-likedAt"
 							],
-							"in": "query"
+							"type": "string",
+							"name": "sort_by"
 						},
 						{
 							"required": false,
@@ -26566,6 +26751,13 @@ return /******/ (function(modules) { // webpackBootstrap
 							"description": "Retrieves animated models",
 							"in": "query",
 							"name": "animated"
+						},
+						{
+							"required": false,
+							"type": "boolean",
+							"description": "Retrieves restricted models (off by default)",
+							"in": "query",
+							"name": "restricted"
 						}
 					],
 					"produces": [
@@ -27054,6 +27246,18 @@ return /******/ (function(modules) { // webpackBootstrap
 							"type": "string",
 							"name": "uid",
 							"in": "path"
+						},
+						{
+							"required": false,
+							"type": "string",
+							"name": "sort_by",
+							"enum": [
+								"createdAt",
+								"-createdAt",
+								"collectedAt",
+								"-collectedAt"
+							],
+							"in": "query"
 						}
 					],
 					"produces": [
@@ -27601,8 +27805,14 @@ return /******/ (function(modules) { // webpackBootstrap
 							"null"
 						]
 					},
+					"hasRestrictedContent": {
+						"type": "boolean"
+					},
 					"models": {
 						"type": "string"
+					},
+					"isAgeRestricted": {
+						"type": "boolean"
 					},
 					"uri": {
 						"type": "string"
@@ -27643,9 +27853,6 @@ return /******/ (function(modules) { // webpackBootstrap
 			"MeDetail": {
 				"type": "object",
 				"properties": {
-					"website": {
-						"type": "string"
-					},
 					"subscriptionCount": {
 						"type": "integer"
 					},
@@ -27661,21 +27868,42 @@ return /******/ (function(modules) { // webpackBootstrap
 					"likeCount": {
 						"type": "integer"
 					},
-					"billingCycle": {
-						"type": "string"
-					},
 					"facebookUsername": {
 						"type": "string"
 					},
 					"biography": {
 						"type": "string"
 					},
+					"city": {
+						"type": "string"
+					},
+					"tagline": {
+						"type": "string"
+					},
+					"modelCount": {
+						"type": "integer"
+					},
+					"twitterUsername": {
+						"type": "string"
+					},
+					"email": {
+						"type": "string"
+					},
+					"website": {
+						"type": "string"
+					},
+					"billingCycle": {
+						"type": "string"
+					},
+					"followersUrl": {
+						"type": "string"
+					},
+					"collectionCount": {
+						"type": "integer"
+					},
 					"dateJoined": {
 						"type": "string",
 						"format": "date"
-					},
-					"city": {
-						"type": "string"
 					},
 					"account": {
 						"type": "string"
@@ -27695,14 +27923,11 @@ return /******/ (function(modules) { // webpackBootstrap
 						},
 						"type": "array"
 					},
-					"tagline": {
+					"country": {
 						"type": "string"
 					},
 					"uri": {
 						"type": "string"
-					},
-					"modelCount": {
-						"type": "integer"
 					},
 					"apiToken": {
 						"type": "string"
@@ -27716,29 +27941,17 @@ return /******/ (function(modules) { // webpackBootstrap
 					"likesUrl": {
 						"type": "string"
 					},
-					"followersUrl": {
-						"type": "string"
+					"avatar": {
+						"$ref": "#/definitions/AvatarRelated"
 					},
-					"collectionCount": {
-						"type": "integer"
-					},
-					"country": {
-						"type": "string"
+					"isLimited": {
+						"type": "boolean"
 					},
 					"followingCount": {
 						"type": "integer"
 					},
-					"twitterUsername": {
-						"type": "string"
-					},
 					"collectionsUrl": {
 						"type": "string"
-					},
-					"email": {
-						"type": "string"
-					},
-					"avatar": {
-						"$ref": "#/definitions/AvatarRelated"
 					}
 				}
 			},
@@ -28407,6 +28620,9 @@ return /******/ (function(modules) { // webpackBootstrap
 					"thumbnails": {
 						"$ref": "#/definitions/ThumbnailsRelated"
 					},
+					"isAgeRestricted": {
+						"type": "boolean"
+					},
 					"uri": {
 						"type": "string"
 					},
@@ -28637,6 +28853,9 @@ return /******/ (function(modules) { // webpackBootstrap
 					},
 					"editorUrl": {
 						"type": "string"
+					},
+					"isAgeRestricted": {
+						"type": "boolean"
 					},
 					"uri": {
 						"type": "string"
@@ -28891,11 +29110,24 @@ return /******/ (function(modules) { // webpackBootstrap
 			"CollectionDetail": {
 				"type": "object",
 				"properties": {
+					"createdAt": {
+						"type": "string",
+						"format": "date"
+					},
 					"description": {
 						"type": [
 							"string",
 							"null"
 						]
+					},
+					"hasRestrictedContent": {
+						"type": "boolean"
+					},
+					"models": {
+						"type": "string"
+					},
+					"isAgeRestricted": {
+						"type": "boolean"
 					},
 					"uri": {
 						"type": "string"
@@ -28903,9 +29135,8 @@ return /******/ (function(modules) { // webpackBootstrap
 					"modelCount": {
 						"type": "integer"
 					},
-					"createdAt": {
-						"type": "string",
-						"format": "date"
+					"user": {
+						"type": "string"
 					},
 					"updatedAt": {
 						"type": "string",

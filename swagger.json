@@ -310,6 +310,13 @@
                     },
                     {
                         "required": false,
+                        "type": "boolean",
+                        "description": "Retrieves restricted collections (off by default)",
+                        "in": "query",
+                        "name": "restricted"
+                    },
+                    {
+                        "required": false,
                         "type": "string",
                         "name": "sort_by",
                         "enum": [
@@ -1097,15 +1104,18 @@
                 "parameters": [
                     {
                         "required": false,
-                        "type": "string",
-                        "name": "sort_by",
+                        "description": "Sorts results (likedAt is only usable with liked_by).",
+                        "in": "query",
                         "enum": [
                             "createdAt",
                             "-createdAt",
                             "viewCount",
-                            "-viewCount"
+                            "-viewCount",
+                            "likedAt",
+                            "-likedAt"
                         ],
-                        "in": "query"
+                        "type": "string",
+                        "name": "sort_by"
                     },
                     {
                         "required": false,
@@ -1175,6 +1185,13 @@
                         "description": "Retrieves animated models",
                         "in": "query",
                         "name": "animated"
+                    },
+                    {
+                        "required": false,
+                        "type": "boolean",
+                        "description": "Retrieves restricted models (off by default)",
+                        "in": "query",
+                        "name": "restricted"
                     }
                 ],
                 "produces": [
@@ -1663,6 +1680,18 @@
                         "type": "string",
                         "name": "uid",
                         "in": "path"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "sort_by",
+                        "enum": [
+                            "createdAt",
+                            "-createdAt",
+                            "collectedAt",
+                            "-collectedAt"
+                        ],
+                        "in": "query"
                     }
                 ],
                 "produces": [
@@ -2210,8 +2239,14 @@
                         "null"
                     ]
                 },
+                "hasRestrictedContent": {
+                    "type": "boolean"
+                },
                 "models": {
                     "type": "string"
+                },
+                "isAgeRestricted": {
+                    "type": "boolean"
                 },
                 "uri": {
                     "type": "string"
@@ -2252,9 +2287,6 @@
         "MeDetail": {
             "type": "object",
             "properties": {
-                "website": {
-                    "type": "string"
-                },
                 "subscriptionCount": {
                     "type": "integer"
                 },
@@ -2270,21 +2302,42 @@
                 "likeCount": {
                     "type": "integer"
                 },
-                "billingCycle": {
-                    "type": "string"
-                },
                 "facebookUsername": {
                     "type": "string"
                 },
                 "biography": {
                     "type": "string"
                 },
+                "city": {
+                    "type": "string"
+                },
+                "tagline": {
+                    "type": "string"
+                },
+                "modelCount": {
+                    "type": "integer"
+                },
+                "twitterUsername": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                },
+                "billingCycle": {
+                    "type": "string"
+                },
+                "followersUrl": {
+                    "type": "string"
+                },
+                "collectionCount": {
+                    "type": "integer"
+                },
                 "dateJoined": {
                     "type": "string",
                     "format": "date"
-                },
-                "city": {
-                    "type": "string"
                 },
                 "account": {
                     "type": "string"
@@ -2304,14 +2357,11 @@
                     },
                     "type": "array"
                 },
-                "tagline": {
+                "country": {
                     "type": "string"
                 },
                 "uri": {
                     "type": "string"
-                },
-                "modelCount": {
-                    "type": "integer"
                 },
                 "apiToken": {
                     "type": "string"
@@ -2325,29 +2375,17 @@
                 "likesUrl": {
                     "type": "string"
                 },
-                "followersUrl": {
-                    "type": "string"
+                "avatar": {
+                    "$ref": "#/definitions/AvatarRelated"
                 },
-                "collectionCount": {
-                    "type": "integer"
-                },
-                "country": {
-                    "type": "string"
+                "isLimited": {
+                    "type": "boolean"
                 },
                 "followingCount": {
                     "type": "integer"
                 },
-                "twitterUsername": {
-                    "type": "string"
-                },
                 "collectionsUrl": {
                     "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "avatar": {
-                    "$ref": "#/definitions/AvatarRelated"
                 }
             }
         },
@@ -3016,6 +3054,9 @@
                 "thumbnails": {
                     "$ref": "#/definitions/ThumbnailsRelated"
                 },
+                "isAgeRestricted": {
+                    "type": "boolean"
+                },
                 "uri": {
                     "type": "string"
                 },
@@ -3246,6 +3287,9 @@
                 },
                 "editorUrl": {
                     "type": "string"
+                },
+                "isAgeRestricted": {
+                    "type": "boolean"
                 },
                 "uri": {
                     "type": "string"
@@ -3500,11 +3544,24 @@
         "CollectionDetail": {
             "type": "object",
             "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                },
                 "description": {
                     "type": [
                         "string",
                         "null"
                     ]
+                },
+                "hasRestrictedContent": {
+                    "type": "boolean"
+                },
+                "models": {
+                    "type": "string"
+                },
+                "isAgeRestricted": {
+                    "type": "boolean"
                 },
                 "uri": {
                     "type": "string"
@@ -3512,9 +3569,8 @@
                 "modelCount": {
                     "type": "integer"
                 },
-                "createdAt": {
-                    "type": "string",
-                    "format": "date"
+                "user": {
+                    "type": "string"
                 },
                 "updatedAt": {
                     "type": "string",
