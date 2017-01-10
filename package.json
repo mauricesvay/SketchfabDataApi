@@ -10,7 +10,7 @@
   "author": "Sketchfab",
   "license": "Apache-2.0",
   "dependencies": {
-    "swagger-client": "^2.1.23"
+    "swagger-client": "^2.1.27"
   },
   "devDependencies": {
     "json-loader": "^0.5.4",

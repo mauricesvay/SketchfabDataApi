@@ -4613,7 +4613,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  if(this.url && this.url.indexOf('http:') === -1 && this.url.indexOf('https:') === -1) {
 	    // no protocol, so we can only use window if it exists
-	    if(typeof(window) !== 'undefined' && window && window.location) {
+	    if(typeof(window) !== 'undefined' && typeof(window.location) !== 'undefined') {
 	      this.url = window.location.origin + this.url;
 	    }
 	  }
@@ -4699,7 +4699,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    on: {
 	      error: function (response) {
-	        if (self.url.substring(0, 4) !== 'http') {
+	        if (self && self.url && self.url.substring(0, 4) !== 'http') {
 	          return self.fail('Please specify the protocol for ' + self.url);
 	        } else if (response.errObj && (response.errObj.code === 'ECONNABORTED' || response.errObj.message.indexOf('timeout') !== -1)) {
 	          return self.fail('Request timed out after ' + self.fetchSpecTimeout + 'ms');
@@ -4747,7 +4747,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    obj.timeout = this.fetchSpecTimeout;
 	  }
 	
-	  if (this.spec) {
+	  if (this.spec && typeof this.spec === 'object') {
 	    self.swaggerObject = this.spec;
 	    setTimeout(function () {
 	      new Resolver().resolve(self.spec, self.url, self.buildFromSpec, self);
@@ -4834,15 +4834,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (typeof this.url === 'string') {
 	    location = this.parseUri(this.url);
 	    if (typeof this.scheme === 'undefined' && typeof this.schemes === 'undefined' || this.schemes.length === 0) {
-	      if(typeof window !== 'undefined') {
+	      if(typeof window !== 'undefined' && typeof(window.location) !== 'undefined') {
 	        // use the window scheme
 	        this.scheme = window.location.protocol.replace(':','');
 	      }
 	      else {
 	        this.scheme = location.scheme || 'http';
 	      }
-	    } else if (typeof this.scheme === 'undefined') {
-	      if(typeof window !== 'undefined') {
+	    } else if (typeof window !== 'undefined' && typeof(window.location) !== 'undefined' && window.location.protocol.indexOf('chrome-extension') === 0) {
+			// if it is chrome swagger ui extension scheme then let swagger doc url scheme decide the protocol
+			this.scheme = location.scheme;
+		} else if (typeof this.scheme === 'undefined') {
+	      if(typeof window !== 'undefined' && typeof(window.location) !== 'undefined') {
 	        var scheme = window.location.protocol.replace(':','');
 	        if(scheme === 'https' && this.schemes.indexOf(scheme) === -1) {
 	          // can't call http from https served page in a browser!
@@ -4894,7 +4897,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	
 	  // get paths, create functions for each operationId
-	  
+	
 	  // Bind help to 'client.apis'
 	  self.apis.help = _.bind(self.help, self);
 	
@@ -4935,6 +4938,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        self.models,
 	        self.clientAuthorizations);
 	
+	      operationObject.connectionAgent = self.connectionAgent;
 	      operationObject.vendorExtensions = {};
 	      for(i in operation) {
 	        helpers.extractExtensions(i, operationObject, operation[i]);
@@ -18973,7 +18977,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return headers;
 	};
 	
-	Operation.prototype.urlify = function (args) {
+	Operation.prototype.urlify = function (args, maskPasswords) {
 	  var formParams = {};
 	  var requestUrl = this.path.replace(/#.*/, ''); // remove URL fragment
 	  var querystring = ''; // grab params from the args, build the querystring along the way
@@ -18982,14 +18986,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var param = this.parameters[i];
 	
 	    if (typeof args[param.name] !== 'undefined') {
+	      var isPassword;
+	      if(param.type === 'string' && param.format === 'password' && maskPasswords) {
+	        isPassword = true;
+	      }
+	
 	      if (param.in === 'path') {
 	        var reg = new RegExp('\{' + param.name + '\}', 'gi');
 	        var value = args[param.name];
 	
 	        if (Array.isArray(value)) {
-	          value = this.encodePathCollection(param.collectionFormat, param.name, value);
+	          value = this.encodePathCollection(param.collectionFormat, param.name, value, isPassword);
 	        } else {
-	          value = this.encodePathParam(value);
+	          value = this.encodePathParam(value, isPassword);
 	        }
 	
 	        requestUrl = requestUrl.replace(reg, value);
@@ -19004,12 +19013,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	          var qp = args[param.name];
 	
 	          if (Array.isArray(qp)) {
-	            querystring += this.encodeQueryCollection(param.collectionFormat, param.name, qp);
+	            querystring += this.encodeQueryCollection(param.collectionFormat, param.name, qp, isPassword);
 	          } else {
-	            querystring += this.encodeQueryKey(param.name) + '=' + this.encodeQueryParam(args[param.name]);
+	            querystring += this.encodeQueryKey(param.name) + '=' + this.encodeQueryParam(args[param.name], isPassword);
 	          }
 	        } else {
-	          querystring += this.encodeQueryKey(param.name) + '=' + this.encodeQueryParam(args[param.name]);
+	          querystring += this.encodeQueryKey(param.name) + '=' + this.encodeQueryParam(args[param.name], isPassword);
 	        }
 	      } else if (param.in === 'formData') {
 	        formParams[param.name] = args[param.name];
@@ -19041,19 +19050,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return missingParams;
 	};
 	
-	Operation.prototype.getBody = function (headers, args) {
+	Operation.prototype.getBody = function (headers, args, opts) {
 	  var formParams = {}, hasFormParams, param, body, key, value, hasBody = false;
 	
 	  // look at each param and put form params in an object
 	  for (var i = 0; i < this.parameters.length; i++) {
 	    param = this.parameters[i];
 	    if (typeof args[param.name] !== 'undefined') {
+	      var isPassword;
+	      if(param.type === 'string' && param.format === 'password') {
+	        isPassword = 'password';
+	      }
 	      if (param.in === 'body') {
 	        body = args[param.name];
 	      } else if (param.in === 'formData') {
 	        formParams[param.name] = {
 	          param: param,
-	          value: args[param.name]
+	          value: args[param.name],
+	          password: isPassword
 	        };
 	        hasFormParams = true;
 	      }
@@ -19085,20 +19099,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (key in formParams) {
 	      param = formParams[key].param;
 	      value = formParams[key].value;
+	      var password;
+	
+	      if(opts && opts.maskPasswords) {
+	        password = formParams[key].password;
+	      }
 	
 	      if (typeof value !== 'undefined') {
 	        if (Array.isArray(value)) {
 	          if (encoded !== '') {
 	            encoded += '&';
 	          }
-	          encoded += this.encodeQueryCollection(param.collectionFormat, key, value);
+	          encoded += this.encodeQueryCollection(param.collectionFormat, key, value, password);
 	        }
 	        else {
 	          if (encoded !== '') {
 	            encoded += '&';
 	          }
 	
-	          encoded += encodeURIComponent(key) + '=' + encodeURIComponent(value);
+	          encoded += encodeURIComponent(key) + '=' + mask(encodeURIComponent(value), password);
 	        }
 	      }
 	    }
@@ -19317,7 +19336,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  for (attrname in contentTypeHeaders) { headers[attrname] = contentTypeHeaders[attrname]; }
 	
 	  var body = this.getBody(contentTypeHeaders, args, opts);
-	  var url = this.urlify(args);
+	  var url = this.urlify(args, opts.maskPasswords);
 	
 	  if(url.indexOf('.{format}') > 0) {
 	    if(headers) {
@@ -19341,6 +19360,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    deferred: deferred,
 	    headers: headers,
 	    clientAuthorizations: opts.clientAuthorizations,
+	    operation: this,
+	    connectionAgent: this.connectionAgent,
 	    on: {
 	      response: function (response) {
 	        if (deferred) {
@@ -19497,7 +19518,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	Operation.prototype.asCurl = function (args1, args2) {
-	  var opts = {mock: true};
+	  var opts = {mock: true, maskPasswords: true};
 	  if (typeof args2 === 'object') {
 	    for (var argKey in args2) {
 	      opts[argKey] = args2[argKey];
@@ -19564,14 +19585,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (Array.isArray(paramValue)) {
 	                  if(parameter.collectionFormat === 'multi') {
 	                    for(var v in paramValue) {
-	                      body += '-F ' + this.encodeQueryKey(parameter.name) + '=' + paramValue[v] + ' ';
+	                      body += '-F ' + this.encodeQueryKey(parameter.name) + '=' + mask(paramValue[v], parameter.format) + ' ';
 	                    }
 	                  }
 	                  else {
-	                    body += '-F ' + this.encodeQueryCollection(parameter.collectionFormat, parameter.name, paramValue) + ' ';
+	                    body += '-F ' + this.encodeQueryCollection(parameter.collectionFormat, parameter.name, mask(paramValue, parameter.format)) + ' ';
 	                  }
 	                } else {
-	                  body += '-F ' + this.encodeQueryKey(parameter.name) + '=' + paramValue + ' ';
+	                  body += '-F ' + this.encodeQueryKey(parameter.name) + '=' + mask(paramValue, parameter.format) + ' ';
 	                }
 	              }
 	            }
@@ -19602,7 +19623,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return 'curl ' + (results.join(' ')) + ' \'' + obj.url + '\'';
 	};
 	
-	Operation.prototype.encodePathCollection = function (type, name, value) {
+	Operation.prototype.encodePathCollection = function (type, name, value, maskPasswords) {
 	  var encoded = '';
 	  var i;
 	  var separator = '';
@@ -19619,16 +19640,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  for (i = 0; i < value.length; i++) {
 	    if (i === 0) {
-	      encoded = this.encodeQueryParam(value[i]);
+	      encoded = this.encodeQueryParam(value[i], maskPasswords);
 	    } else {
-	      encoded += separator + this.encodeQueryParam(value[i]);
+	      encoded += separator + this.encodeQueryParam(value[i], maskPasswords);
 	    }
 	  }
 	
 	  return encoded;
 	};
 	
-	Operation.prototype.encodeQueryCollection = function (type, name, value) {
+	Operation.prototype.encodeQueryCollection = function (type, name, value, maskPasswords) {
 	  var encoded = '';
 	  var i;
 	
@@ -19637,7 +19658,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (i = 0; i < value.length; i++) {
 	      if (i > 0) {encoded += '&';}
 	
-	      encoded += this.encodeQueryKey(name) + '=' + this.encodeQueryParam(value[i]);
+	      encoded += this.encodeQueryKey(name) + '=' + mask(this.encodeQueryParam(value[i]), maskPasswords);
 	    }
 	  } else {
 	    var separator = '';
@@ -19655,8 +19676,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (i !== 0) {
 	          encoded += '&';
 	        }
-	
-	        encoded += this.encodeQueryKey(name) + '[]=' + this.encodeQueryParam(value[i]);
+	        encoded += this.encodeQueryKey(name) + '[]=' + mask(this.encodeQueryParam(value[i]), maskPasswords);
 	      }
 	    }
 	
@@ -19679,17 +19699,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	      .replace('%5B','[').replace('%5D', ']').replace('%24', '$');
 	};
 	
-	Operation.prototype.encodeQueryParam = function (arg) {
+	Operation.prototype.encodeQueryParam = function (arg, maskPasswords) {
+	  if(maskPasswords) {
+	    return "******";
+	  }
 	  return encodeURIComponent(arg);
 	};
 	
 	/**
 	 * TODO revisit, might not want to leave '/'
 	 **/
-	Operation.prototype.encodePathParam = function (pathParam) {
-	  return encodeURIComponent(pathParam);
+	Operation.prototype.encodePathParam = function (pathParam, maskPasswords) {
+	  return encodeURIComponent(pathParam, maskPasswords);
 	};
-
+	
+	var mask = function(value, format) {
+	  if(typeof format === 'string' && format === 'password') {
+	    return '******';
+	  }
+	  return value;
+	}
 
 /***/ },
 /* 154 */
@@ -19770,14 +19799,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  var responseInterceptor = function(data) {
 	    if(opts && opts.responseInterceptor) {
-	      data = opts.responseInterceptor.apply(data);
+	      data = opts.responseInterceptor.apply(data, [obj]);
 	    }
 	    return success(data);
 	  };
 	
 	  var errorInterceptor = function(data) {
 	    if(opts && opts.responseInterceptor) {
-	      data = opts.responseInterceptor.apply(data);
+	      data = opts.responseInterceptor.apply(data, [obj]);
 	    }
 	    error(data);
 	  };
@@ -19913,7 +19942,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	SuperagentHttpClient.prototype.execute = function (obj) {
-	  var connectionAgent = obj.connectionAgent;
 	  var method = obj.method.toLowerCase();
 	  var timeout = obj.timeout;
 	
@@ -19922,11 +19950,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	  var headers = obj.headers || {};
 	
-	  if (connectionAgent) {
-	      request = request.agent(connectionAgent);
-	  }
-	
 	  var r = request[method](obj.url);
+	
+	  if (obj.connectionAgent) {
+	    r.agent(obj.connectionAgent);
+	  }
 	
 	  if (timeout) {
 	    r.timeout(timeout);
