@@ -41,6 +41,49 @@
                 "description": "Unsubscribes to a collection."
             }
         },
+        "/v3/me/followers": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/UserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication credentials were not provided or do not match"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "sort_by",
+                        "enum": [
+                            "dateJoined",
+                            "-dateJoined",
+                            "followerCount",
+                            "-followerCount"
+                        ],
+                        "in": "query"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "me",
+                    "users",
+                    "relationships"
+                ],
+                "description": "Returns a list of users following you."
+            }
+        },
         "/v3/users": {
             "get": {
                 "description": "Returns a list of users.",
@@ -109,7 +152,7 @@
                     {
                         "required": false,
                         "type": "string",
-                        "description": "Searches collections by user (username)",
+                        "description": "Searches collections by <a href=\"#!/users/\" target=\"_blank\">user</a> (username)",
                         "in": "query",
                         "name": "user"
                     },
@@ -157,7 +200,7 @@
         },
         "/v3/me/environments/{uid}": {
             "patch": {
-                "description": "Updates an environment (pro only).",
+                "description": "Updates an environment [pro only].",
                 "parameters": [
                     {
                         "required": true,
@@ -166,12 +209,12 @@
                         "in": "path"
                     },
                     {
+                        "description": "Updates the name",
+                        "in": "formData",
+                        "maxLength": 64,
                         "required": true,
-                        "in": "body",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/EnvironmentPatch"
-                        }
+                        "type": "string",
+                        "name": "name"
                     }
                 ],
                 "produces": [
@@ -227,7 +270,7 @@
                     "me",
                     "environment"
                 ],
-                "description": "Deletes an environment (pro only)."
+                "description": "Deletes an environment [pro only]"
             }
         },
         "/v3/collections": {
@@ -235,12 +278,32 @@
                 "description": "Creates a collection.",
                 "parameters": [
                     {
+                        "description": "Sets a name",
+                        "in": "formData",
+                        "maxLength": 50,
                         "required": true,
-                        "in": "body",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/CollectionPost"
-                        }
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "description": "Sets a description",
+                        "in": "formData",
+                        "maxLength": 1024,
+                        "required": true,
+                        "type": "string",
+                        "name": "description"
+                    },
+                    {
+                        "description": "Sets <a href=\"#/models\" target=\"_blank\">models</a> (uid)",
+                        "items": {
+                            "type": "string"
+                        },
+                        "required": false,
+                        "name": "models",
+                        "in": "formData",
+                        "maxLength": 1024,
+                        "type": "array",
+                        "collectionFormat": "multi"
                     }
                 ],
                 "produces": [
@@ -262,7 +325,15 @@
                         "description": "Bad Request"
                     },
                     "201": {
-                        "description": "Success"
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        },
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/CreateResponse"
+                        }
                     },
                     "401": {
                         "description": "Authentication credentials were not provided or do not match"
@@ -286,7 +357,7 @@
                     {
                         "required": false,
                         "type": "string",
-                        "description": "Retrieves collections created by user (username)",
+                        "description": "Retrieves collections created by <a href=\"#!/users/\" target=\"_blank\">user</a> (username)",
                         "in": "query",
                         "name": "user"
                     },
@@ -385,12 +456,107 @@
                 "description": "Updates your profile.",
                 "parameters": [
                     {
-                        "required": true,
-                        "in": "body",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/MePatch"
-                        }
+                        "required": false,
+                        "type": "string",
+                        "description": "Updates your email",
+                        "in": "formData",
+                        "name": "email"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "Updates your password. Needs passwordConfirmation",
+                        "in": "formData",
+                        "name": "password"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "name": "passwordConfirmation",
+                        "in": "formData"
+                    },
+                    {
+                        "description": "Updates your <a href=\"#/skills\" target=\"_blank\">skills</a> (uid)",
+                        "name": "skills",
+                        "in": "formData",
+                        "items": {
+                            "type": "string"
+                        },
+                        "required": false,
+                        "type": "array",
+                        "collectionFormat": "multi"
+                    },
+                    {
+                        "description": "Updates your display name",
+                        "in": "formData",
+                        "maxLength": 50,
+                        "required": false,
+                        "type": "string",
+                        "name": "displayName"
+                    },
+                    {
+                        "description": "Updates your twitter username",
+                        "in": "formData",
+                        "maxLength": 15,
+                        "required": false,
+                        "type": "string",
+                        "name": "twitterUsername"
+                    },
+                    {
+                        "description": "Updates your facebook username",
+                        "in": "formData",
+                        "maxLength": 50,
+                        "required": false,
+                        "type": "string",
+                        "name": "facebookUsername"
+                    },
+                    {
+                        "description": "Updates your linkedin username",
+                        "in": "formData",
+                        "maxLength": 50,
+                        "required": false,
+                        "type": "string",
+                        "name": "linkedinUsername"
+                    },
+                    {
+                        "description": "Updates your bio",
+                        "in": "formData",
+                        "maxLength": 256,
+                        "required": false,
+                        "type": "string",
+                        "name": "biography"
+                    },
+                    {
+                        "description": "Updates your tagline",
+                        "in": "formData",
+                        "maxLength": 140,
+                        "required": false,
+                        "type": "string",
+                        "name": "tagline"
+                    },
+                    {
+                        "description": "Updates your website",
+                        "in": "formData",
+                        "maxLength": 128,
+                        "required": false,
+                        "type": "string",
+                        "name": "website"
+                    },
+                    {
+                        "description": "Updates your city",
+                        "in": "formData",
+                        "maxLength": 50,
+                        "required": false,
+                        "type": "string",
+                        "name": "city"
+                    },
+                    {
+                        "description": "Updates your country",
+                        "in": "formData",
+                        "maxLength": 50,
+                        "required": false,
+                        "type": "string",
+                        "name": "country"
                     }
                 ],
                 "produces": [
@@ -402,7 +568,8 @@
                     }
                 ],
                 "tags": [
-                    "me"
+                    "me",
+                    "users"
                 ],
                 "consumes": [
                     "application/json"
@@ -496,65 +663,80 @@
                         "in": "path"
                     },
                     {
+                        "description": "Sets a name",
+                        "in": "formData",
+                        "maxLength": 48,
                         "required": false,
                         "type": "string",
-                        "description": "Sets a name on the model (48 char max)",
-                        "in": "formData",
                         "name": "name"
                     },
                     {
                         "required": false,
                         "type": "boolean",
-                        "description": "Sets a model private (pro only).",
+                        "description": "Sets private [pro only]",
                         "in": "formData",
                         "name": "private"
                     },
                     {
+                        "description": "Sets a password [pro only]",
+                        "in": "formData",
+                        "maxLength": 64,
                         "required": false,
                         "type": "string",
-                        "description": "Sets a password to a model (pro only)",
-                        "in": "formData",
                         "name": "password"
                     },
                     {
+                        "in": "formData",
+                        "description": "Sets a <a href=#!/licenses/ target='_blank'>license</a> (label)\n",
+                        "format": "test",
                         "required": false,
                         "type": "string",
-                        "description": "Sets a license (label)",
-                        "in": "formData",
                         "name": "license"
                     },
                     {
-                        "description": "Sets tags (slug) to a model",
+                        "description": "Sets <a href=#!/tags/ target='_blank'>tags</a> (slug)",
+                        "name": "tags",
                         "in": "formData",
                         "items": {
                             "type": "string"
                         },
                         "required": false,
                         "type": "array",
-                        "name": "tags"
+                        "collectionFormat": "multi"
                     },
                     {
-                        "description": "Sets categories (uid) to a model",
+                        "description": "Sets <a href=#!/categories/ target='_blank'>categories</a> (slug)",
+                        "name": "categories",
                         "in": "formData",
                         "items": {
                             "type": "string"
                         },
                         "required": false,
                         "type": "array",
-                        "name": "categories"
+                        "collectionFormat": "multi"
+                    },
+                    {
+                        "description": "Sets published after it is processed",
+                        "in": "formData",
+                        "default": true,
+                        "required": false,
+                        "type": "boolean",
+                        "name": "isPublished"
+                    },
+                    {
+                        "description": "Sets a description",
+                        "in": "formData",
+                        "maxLength": 1024,
+                        "required": false,
+                        "type": "string",
+                        "name": "description"
                     },
                     {
                         "required": true,
                         "type": "file",
-                        "name": "modelFile",
-                        "in": "formData"
-                    },
-                    {
-                        "required": false,
-                        "type": "string",
-                        "description": "Sets a description on the model (1024 char max)",
+                        "description": "Model archive. Max 50mb for basic users, 200mb for pro users, 500mb for biz users",
                         "in": "formData",
-                        "name": "description"
+                        "name": "modelFile"
                     }
                 ],
                 "produces": [
@@ -643,12 +825,73 @@
                         "in": "path"
                     },
                     {
-                        "required": true,
-                        "in": "body",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/ModelPatch"
-                        }
+                        "description": "Sets a name",
+                        "in": "formData",
+                        "maxLength": 48,
+                        "required": false,
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "required": false,
+                        "type": "boolean",
+                        "description": "Sets private [pro only]",
+                        "in": "formData",
+                        "name": "private"
+                    },
+                    {
+                        "description": "Sets a password [pro only]",
+                        "in": "formData",
+                        "maxLength": 64,
+                        "required": false,
+                        "type": "string",
+                        "name": "password"
+                    },
+                    {
+                        "in": "formData",
+                        "description": "Sets a <a href=#!/licenses/ target='_blank'>license</a> (label)\n",
+                        "format": "test",
+                        "required": false,
+                        "type": "string",
+                        "name": "license"
+                    },
+                    {
+                        "description": "Sets <a href=#!/tags/ target='_blank'>tags</a> (slug)",
+                        "name": "tags",
+                        "in": "formData",
+                        "items": {
+                            "type": "string"
+                        },
+                        "required": false,
+                        "type": "array",
+                        "collectionFormat": "multi"
+                    },
+                    {
+                        "description": "Sets <a href=#!/categories/ target='_blank'>categories</a> (slug)",
+                        "name": "categories",
+                        "in": "formData",
+                        "items": {
+                            "type": "string"
+                        },
+                        "required": false,
+                        "type": "array",
+                        "collectionFormat": "multi"
+                    },
+                    {
+                        "description": "Sets published after it is processed",
+                        "in": "formData",
+                        "default": true,
+                        "required": false,
+                        "type": "boolean",
+                        "name": "isPublished"
+                    },
+                    {
+                        "description": "Sets a description",
+                        "in": "formData",
+                        "maxLength": 1024,
+                        "required": false,
+                        "type": "string",
+                        "name": "description"
                     }
                 ],
                 "produces": [
@@ -663,6 +906,30 @@
                     "models"
                 ],
                 "description": "Updates model information."
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "models"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "name": "uid",
+                        "in": "path"
+                    }
+                ],
+                "description": "Deletes one of your models"
             }
         },
         "/v3/search?type=models": {
@@ -690,12 +957,12 @@
                     {
                         "required": false,
                         "type": "string",
-                        "description": "Searches models by a user (username)",
+                        "description": "Searches models by a <a href=\"#!/users/\" target=\"_blank\">user</a> (username)",
                         "in": "query",
                         "name": "user"
                     },
                     {
-                        "description": "Searches models by tags (slug)",
+                        "description": "Searches models by <a href=\"#!/tags/\" target=\"_blank\">tags</a> (slug)",
                         "in": "query",
                         "items": {
                             "type": "string"
@@ -787,17 +1054,63 @@
                 "description": "Search and filters in models"
             }
         },
-        "/v3/me/followers": {
+        "/v3/me/backgrounds": {
+            "post": {
+                "description": "Creates a new background [pro only]. Accepts multipart/form-data only.",
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "file",
+                        "description": "JPG or PNG image. Max 4mb",
+                        "in": "formData",
+                        "name": "image"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "tags": [
+                    "models",
+                    "me"
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "201": {
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        },
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/CreateResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Permission Denied"
+                    },
+                    "401": {
+                        "description": "Authentication credentials were not provided or do not match"
+                    }
+                }
+            },
             "get": {
                 "responses": {
                     "200": {
                         "description": "Success",
                         "schema": {
-                            "$ref": "#/definitions/UserResponse"
+                            "$ref": "#/definitions/BackgroundResponse"
                         }
-                    },
-                    "401": {
-                        "description": "Authentication credentials were not provided or do not match"
                     }
                 },
                 "parameters": [
@@ -806,10 +1119,8 @@
                         "type": "string",
                         "name": "sort_by",
                         "enum": [
-                            "dateJoined",
-                            "-dateJoined",
-                            "followerCount",
-                            "-followerCount"
+                            "createdAt",
+                            "-createdAt"
                         ],
                         "in": "query"
                     }
@@ -824,10 +1135,10 @@
                 ],
                 "tags": [
                     "me",
-                    "users",
-                    "relationships"
+                    "models",
+                    "backgrounds"
                 ],
-                "description": "Returns a list of users following you."
+                "description": "Returns available backgrounds for your models"
             }
         },
         "/v3/search": {
@@ -888,77 +1199,6 @@
                 ]
             }
         },
-        "/v3/comments": {
-            "post": {
-                "security": [
-                    {
-                        "Token": []
-                    }
-                ],
-                "tags": [
-                    "comments"
-                ],
-                "responses": {
-                    "400": {
-                        "description": "Bad Request"
-                    },
-                    "201": {
-                        "description": "Created"
-                    },
-                    "429": {
-                        "description": "Enhance your calm"
-                    }
-                },
-                "parameters": [
-                    {
-                        "required": true,
-                        "in": "body",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/CommentPost"
-                        }
-                    }
-                ],
-                "description": "Creates a comment"
-            },
-            "get": {
-                "tags": [
-                    "comments"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success",
-                        "schema": {
-                            "$ref": "#/definitions/CommentResponse"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "required": false,
-                        "type": "string",
-                        "description": "Retrieves comments of a model (urlid)",
-                        "in": "query",
-                        "name": "model"
-                    },
-                    {
-                        "required": false,
-                        "type": "string",
-                        "description": "Retrieves comments of models tagged in category (uid)",
-                        "in": "query",
-                        "name": "category"
-                    },
-                    {
-                        "required": false,
-                        "type": "string",
-                        "description": "Retrieves comments of a user (username)",
-                        "in": "query",
-                        "name": "user"
-                    }
-                ],
-                "description": "Returns a list of comments from public, published models"
-            }
-        },
         "/v3/licences/{uid}": {
             "get": {
                 "description": "Returns the detail of a license.",
@@ -998,7 +1238,10 @@
                                 "type": "string"
                             }
                         },
-                        "description": "Created"
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/CreateResponse"
+                        }
                     },
                     "401": {
                         "description": "Authentication credentials were not provided or do not match"
@@ -1006,61 +1249,60 @@
                 },
                 "parameters": [
                     {
+                        "description": "Sets a name",
+                        "in": "formData",
+                        "maxLength": 48,
                         "required": false,
                         "type": "string",
-                        "description": "Sets a name on the model (48 char max)",
-                        "in": "formData",
                         "name": "name"
                     },
                     {
                         "required": false,
                         "type": "boolean",
-                        "description": "Sets a model private (pro only)",
+                        "description": "Sets private [pro only]",
                         "in": "formData",
                         "name": "private"
                     },
                     {
+                        "description": "Sets a password [pro only]",
+                        "in": "formData",
+                        "maxLength": 64,
                         "required": false,
                         "type": "string",
-                        "description": "Sets a password to a model (pro only)",
-                        "in": "formData",
                         "name": "password"
                     },
                     {
+                        "in": "formData",
+                        "description": "Sets a <a href=#!/licenses/ target='_blank'>license</a> (label)",
+                        "format": "test",
                         "required": false,
                         "type": "string",
-                        "description": "Sets a license (label)",
-                        "in": "formData",
                         "name": "license"
                     },
                     {
-                        "description": "Sets tags to a model",
+                        "description": "Sets <a href=#!/tags/ target='_blank'>tags</a> (slug)",
+                        "name": "tags",
                         "in": "formData",
                         "items": {
                             "type": "string"
                         },
                         "required": false,
                         "type": "array",
-                        "name": "tags"
+                        "collectionFormat": "multi"
                     },
                     {
-                        "description": "Sets categories (uid) to a model",
+                        "description": "Sets <a href=#!/categories/ target='_blank'>categories</a> (slug)",
+                        "name": "categories",
                         "in": "formData",
                         "items": {
                             "type": "string"
                         },
                         "required": false,
                         "type": "array",
-                        "name": "categories"
+                        "collectionFormat": "multi"
                     },
                     {
-                        "required": true,
-                        "type": "file",
-                        "name": "modelFile",
-                        "in": "formData"
-                    },
-                    {
-                        "description": "Sets a model published after it is processed",
+                        "description": "Sets published after it is processed",
                         "in": "formData",
                         "default": true,
                         "required": false,
@@ -1068,11 +1310,19 @@
                         "name": "isPublished"
                     },
                     {
+                        "description": "Sets a description",
+                        "in": "formData",
+                        "maxLength": 1024,
                         "required": false,
                         "type": "string",
-                        "description": "Sets a description on the model (1024 char max)",
-                        "in": "formData",
                         "name": "description"
+                    },
+                    {
+                        "required": true,
+                        "type": "file",
+                        "description": "Model archive. Max 50mb for basic users, 200mb for pro users, 500mb for biz users",
+                        "in": "formData",
+                        "name": "modelFile"
                     }
                 ],
                 "tags": [
@@ -1120,34 +1370,36 @@
                     {
                         "required": false,
                         "type": "string",
-                        "description": "Retrieves models filtered by a user (username)",
+                        "description": "Retrieves models filtered by a <a href=\"#!/users/\" target=\"_blank\">user</a> (username)",
                         "in": "query",
                         "name": "user"
                     },
                     {
-                        "description": "Retrieves models filtered by tags (slug)",
+                        "description": "Retrieves models filtered by <a href=\"#!/tags/\" target=\"_blank\">tags</a> (slug)",
+                        "name": "tags",
                         "in": "query",
                         "items": {
                             "type": "string"
                         },
                         "required": false,
                         "type": "array",
-                        "name": "tags"
+                        "collectionFormat": "multi"
                     },
                     {
-                        "description": "Retrieves models filtered by categories (uid)",
+                        "description": "Retrieves models filtered by <a href=#!/categories/get_v3_categories target='_blank'>categories</a> (uid)",
+                        "name": "categories",
                         "in": "query",
                         "items": {
                             "type": "string"
                         },
                         "required": false,
                         "type": "array",
-                        "name": "categories"
+                        "collectionFormat": "multi"
                     },
                     {
                         "required": false,
                         "type": "string",
-                        "description": "Retrieves models liked by a user (username)",
+                        "description": "Retrieves models liked by a <a href=\"#!/users/\" target=\"_blank\">user</a> (username)",
                         "in": "query",
                         "name": "liked_by"
                     },
@@ -1175,7 +1427,7 @@
                     {
                         "required": false,
                         "type": "boolean",
-                        "description": "Retrieves downlodable models",
+                        "description": "Retrieves downloadable models",
                         "in": "query",
                         "name": "downloadable"
                     },
@@ -1189,10 +1441,38 @@
                     {
                         "required": false,
                         "type": "boolean",
-                        "description": "Retrieves restricted models (off by default)",
+                        "description": "Retrieves age restricted models (off by default)",
                         "in": "query",
                         "name": "restricted"
                     }
+                ],
+                "produces": [
+                    "application/json"
+                ]
+            }
+        },
+        "/v3/me/collections": {
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "description": "Returns a list of your collections",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/CollectionResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication credentials were not provided or do not match"
+                    }
+                },
+                "tags": [
+                    "me",
+                    "collections"
                 ],
                 "produces": [
                     "application/json"
@@ -1240,14 +1520,14 @@
                     {
                         "required": false,
                         "type": "string",
-                        "description": "Defines the background used. Either a color, a background, an environment or transparent. ex. {\"color\": \"#ffffff\"} or {\"environment\": \"{uid}\"}\n",
+                        "description": "Defines the background used. Either a color, a <a href=\"#/backgrounds\" target=\"_blank\">background></a> (uid), an <a href=\"#/environment\" target=\"_blank\">environment</a> (uid) or transparent.\neg: {\"color\": \"#ffffff\"}, {\"environment\": \"uid\"}, {\"background\": \"uid\"} or {\"transparent\": 1}\n",
                         "in": "formData",
                         "name": "background"
                     },
                     {
                         "required": false,
                         "type": "string",
-                        "description": "Either a 4x4 matrix or an angle with an axis.",
+                        "description": "Either a 4x4 matrix or an angle with an axis.\neg: {\"axis\": [1, 1, 0], \"angle\": 34} or {\"matrix\": [0.1, 0.2, 0.3 ... ], \"axis\": [1, 1, 0], \"angle\": 34.42}\n",
                         "in": "formData",
                         "name": "orientation"
                     }
@@ -1263,12 +1543,10 @@
                 "parameters": [
                     {
                         "required": true,
-                        "in": "body",
-                        "description": "User (uid) to follow",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/UserFollowingPost"
-                        }
+                        "type": "string",
+                        "description": "<a href=\"#/users\" target=\"_blank\">User</a> (uid) to follow",
+                        "in": "formData",
+                        "name": "toUser"
                     }
                 ],
                 "produces": [
@@ -1399,12 +1677,10 @@
                 "parameters": [
                     {
                         "required": true,
-                        "in": "body",
-                        "description": "The collection (uid) to subscribe to",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/ModelCollectionPost"
-                        }
+                        "type": "string",
+                        "description": "The <a href=\"#/collections\" target=\"_blank\">collection</a> (uid) to subscribe to",
+                        "in": "formData",
+                        "name": "collection"
                     }
                 ],
                 "produces": [
@@ -1427,7 +1703,15 @@
                         "description": "Bad Request"
                     },
                     "201": {
-                        "description": "Created"
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        },
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/CreateResponse"
+                        }
                     },
                     "401": {
                         "description": "Authentication credentials were not provided or do not match"
@@ -1539,12 +1823,32 @@
                         "in": "path"
                     },
                     {
+                        "description": "Updates the name",
+                        "in": "formData",
+                        "maxLength": 50,
                         "required": true,
-                        "in": "body",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/CollectionPatch"
-                        }
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "description": "Updates the description",
+                        "in": "formData",
+                        "maxLength": 1024,
+                        "required": false,
+                        "type": "string",
+                        "name": "description"
+                    },
+                    {
+                        "description": "Sets <a href=\"#/models\" target=\"_blank\">models</a> (uid)",
+                        "items": {
+                            "type": "string"
+                        },
+                        "required": false,
+                        "name": "models",
+                        "in": "formData",
+                        "maxLength": 1024,
+                        "type": "array",
+                        "collectionFormat": "multi"
                     }
                 ],
                 "produces": [
@@ -1558,11 +1862,10 @@
                 "parameters": [
                     {
                         "required": true,
-                        "in": "body",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/LikeModelPost"
-                        }
+                        "type": "string",
+                        "description": "<a href=\"#/models\" target=\"_blank\">Model</a> (uid) to like",
+                        "in": "formData",
+                        "name": "model"
                     }
                 ],
                 "produces": [
@@ -1575,14 +1878,23 @@
                 ],
                 "tags": [
                     "me",
-                    "models"
+                    "models",
+                    "likes"
                 ],
                 "consumes": [
                     "application/json"
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created"
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        },
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/CreateResponse"
+                        }
                     },
                     "401": {
                         "description": "Authentication credentials were not provided or do not match"
@@ -1608,6 +1920,19 @@
                         }
                     }
                 },
+                "parameters": [
+                    {
+                        "required": false,
+                        "description": "Sorts results.",
+                        "in": "query",
+                        "enum": [
+                            "likedAt",
+                            "-likedAt"
+                        ],
+                        "type": "string",
+                        "name": "sort_by"
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ]
@@ -1625,7 +1950,15 @@
                         "description": "Bad Request"
                     },
                     "201": {
-                        "description": "Success"
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        },
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/CreateResponse"
+                        }
                     },
                     "403": {
                         "description": "Permission Denied"
@@ -1645,12 +1978,16 @@
                         "in": "path"
                     },
                     {
-                        "required": true,
-                        "in": "body",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/CollectionModelPost"
-                        }
+                        "description": "Adds <a href=\"#/models\" target=\"_blank\">models</a> (uid)",
+                        "items": {
+                            "type": "string"
+                        },
+                        "required": false,
+                        "name": "models",
+                        "in": "formData",
+                        "maxLength": 1024,
+                        "type": "array",
+                        "collectionFormat": "multi"
                     }
                 ],
                 "produces": [
@@ -1726,12 +2063,16 @@
                         "in": "path"
                     },
                     {
-                        "required": true,
-                        "in": "body",
-                        "name": "body",
-                        "schema": {
-                            "$ref": "#/definitions/CollectionModelPost"
-                        }
+                        "description": "Removes <a href=\"#/models\" target=\"_blank\">models</a> (uid)",
+                        "items": {
+                            "type": "string"
+                        },
+                        "required": false,
+                        "name": "models",
+                        "in": "formData",
+                        "maxLength": 1024,
+                        "type": "array",
+                        "collectionFormat": "multi"
                     }
                 ],
                 "produces": [
@@ -1756,7 +2097,7 @@
                     {
                         "required": true,
                         "type": "string",
-                        "description": "Model (uid) to un-like",
+                        "description": "<a href=\"#/models\" target=\"_blank\">Model</a> (uid) to un-like",
                         "in": "path",
                         "name": "uid"
                     }
@@ -1782,10 +2123,11 @@
                 "description": "Creates an environment (pro only). Accepts multipart/form-data only.",
                 "parameters": [
                     {
+                        "description": "Sets a name",
+                        "in": "formData",
+                        "maxLength": 64,
                         "required": true,
                         "type": "string",
-                        "description": "Sets a name on the environment (64 char max)",
-                        "in": "formData",
                         "name": "name"
                     },
                     {
@@ -1812,7 +2154,15 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created"
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        },
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/CreateResponse"
+                        }
                     },
                     "403": {
                         "description": "Permission Denied"
@@ -1947,13 +2297,14 @@
                     },
                     {
                         "description": "Searches users by skills (slug)",
+                        "name": "skills",
                         "in": "query",
                         "items": {
                             "type": "string"
                         },
                         "required": false,
                         "type": "array",
-                        "name": "skills"
+                        "collectionFormat": "multi"
                     },
                     {
                         "required": false,
@@ -2031,57 +2382,66 @@
                         }
                     }
                 },
-                "description": "Success"
+                "description": "Returns a list of tags"
             }
         },
-        "/v3/me/background": {
+        "/v3/comments": {
             "post": {
-                "description": "Creates a new background (pro only). Accepts multipart/form-data only.",
-                "parameters": [
-                    {
-                        "required": true,
-                        "type": "file",
-                        "description": "Max 4mb",
-                        "in": "formData",
-                        "name": "image"
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
                 "security": [
                     {
                         "Token": []
                     }
                 ],
                 "tags": [
-                    "models",
-                    "me"
-                ],
-                "consumes": [
-                    "multipart/form-data"
+                    "comments"
                 ],
                 "responses": {
                     "400": {
                         "description": "Bad Request"
                     },
                     "201": {
-                        "description": "Created"
+                        "headers": {
+                            "Location": {
+                                "type": "string"
+                            }
+                        },
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/CreateResponse"
+                        }
                     },
-                    "403": {
-                        "description": "Permission Denied"
-                    },
-                    "401": {
-                        "description": "Authentication credentials were not provided or do not match"
+                    "429": {
+                        "description": "Enhance your calm"
                     }
-                }
+                },
+                "parameters": [
+                    {
+                        "required": true,
+                        "type": "string",
+                        "description": "<a href=\"#/models\" target=\"_blank\">Model</a> (uid) to comment",
+                        "in": "formData",
+                        "name": "model"
+                    },
+                    {
+                        "description": "Sets a body",
+                        "in": "formData",
+                        "maxLength": 3000,
+                        "required": true,
+                        "type": "string",
+                        "name": "body"
+                    }
+                ],
+                "description": "Creates a comment"
             },
             "get": {
+                "tags": [
+                    "comments"
+                ],
                 "responses": {
                     "200": {
                         "description": "Success",
                         "schema": {
-                            "$ref": "#/definitions/BackgroundResponse"
+                            "$ref": "#/definitions/CommentResponse"
                         }
                     }
                 },
@@ -2089,28 +2449,26 @@
                     {
                         "required": false,
                         "type": "string",
-                        "name": "sort_by",
-                        "enum": [
-                            "createdAt",
-                            "-createdAt"
-                        ],
-                        "in": "query"
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "security": [
+                        "description": "Retrieves comments of a model (urlid)",
+                        "in": "query",
+                        "name": "model"
+                    },
                     {
-                        "Token": []
+                        "required": false,
+                        "type": "string",
+                        "description": "Retrieves comments of models tagged in category (uid)",
+                        "in": "query",
+                        "name": "category"
+                    },
+                    {
+                        "required": false,
+                        "type": "string",
+                        "description": "Retrieves comments of a <a href=\"#!/users/\" target=\"_blank\">user</a> (username)",
+                        "in": "query",
+                        "name": "user"
                     }
                 ],
-                "tags": [
-                    "me",
-                    "models",
-                    "backgrounds"
-                ],
-                "description": "Returns available backgrounds for your models"
+                "description": "Returns a list of comments from public, published models"
             }
         },
         "/v3/collections/thumbnails": {
@@ -2129,13 +2487,14 @@
                 },
                 "parameters": [
                     {
+                        "name": "uids",
+                        "in": "query",
                         "items": {
                             "type": "string"
                         },
                         "required": true,
                         "type": "array",
-                        "name": "uids",
-                        "in": "query"
+                        "collectionFormat": "multi"
                     }
                 ],
                 "description": "Returns the popular thumbnails of collections"
@@ -2389,14 +2748,6 @@
                 }
             }
         },
-        "EnvironmentPatch": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
         "AvatarRelated": {
             "type": "object",
             "properties": {
@@ -2455,95 +2806,6 @@
                         "$ref": "#/definitions/Environment"
                     },
                     "type": "array"
-                }
-            }
-        },
-        "MePatch": {
-            "type": "object",
-            "properties": {
-                "website": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "city": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "displayName": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "skills": {
-                    "type": [
-                        "array",
-                        "null"
-                    ]
-                },
-                "country": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "password_confirmation": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "linkedinUsername": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "interest": {
-                    "type": [
-                        "array",
-                        "null"
-                    ]
-                },
-                "tagline": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "twitterUsername": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "password": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "facebookUsername": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "email": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "biography": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
                 }
             }
         },
@@ -2782,23 +3044,6 @@
                 }
             }
         },
-        "CollectionPatch": {
-            "type": "object",
-            "properties": {
-                "models": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                }
-            }
-        },
         "BackgroundResponse": {
             "type": "object",
             "properties": {
@@ -2807,17 +3052,6 @@
                         "$ref": "#/definitions/BackgroundList"
                     },
                     "type": "array"
-                }
-            }
-        },
-        "CommentPost": {
-            "type": "object",
-            "properties": {
-                "body": {
-                    "type": "string"
-                },
-                "model": {
-                    "type": "string"
                 }
             }
         },
@@ -2941,31 +3175,6 @@
                 }
             }
         },
-        "CollectionPost": {
-            "type": "object",
-            "properties": {
-                "models": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                }
-            }
-        },
-        "ModelCollectionPost": {
-            "type": "object",
-            "properties": {
-                "collection": {
-                    "type": "string"
-                }
-            }
-        },
         "CollectionSearchResponse": {
             "type": "object",
             "properties": {
@@ -3082,14 +3291,6 @@
                 }
             }
         },
-        "LikeModelPost": {
-            "type": "object",
-            "properties": {
-                "model": {
-                    "type": "string"
-                }
-            }
-        },
         "LicensesResponse": {
             "type": "object",
             "properties": {
@@ -3101,12 +3302,12 @@
                 }
             }
         },
-        "CollectionModelPost": {
+        "CategoriesResponse": {
             "type": "object",
             "properties": {
-                "models": {
+                "results": {
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/CategoriesRelated"
                     },
                     "type": "array"
                 }
@@ -3218,6 +3419,73 @@
                 }
             }
         },
+        "CreateResponse": {
+            "type": "object",
+            "properties": {
+                "uid": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                }
+            }
+        },
+        "CommentResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "isDeleted": {
+                    "type": "boolean"
+                },
+                "user": {
+                    "$ref": "#/definitions/UserRelated"
+                }
+            }
+        },
+        "GlobalSearchResponse": {
+            "type": "object",
+            "properties": {
+                "results": {
+                    "type": "object",
+                    "properties": {
+                        "models": {
+                            "items": {
+                                "$ref": "#/definitions/ModelSearchList"
+                            },
+                            "type": "array"
+                        },
+                        "collections": {
+                            "items": {
+                                "$ref": "#/definitions/CollectionSearchList"
+                            },
+                            "type": "array"
+                        },
+                        "users": {
+                            "items": {
+                                "$ref": "#/definitions/UserSearchResponse"
+                            },
+                            "type": "array"
+                        }
+                    }
+                }
+            }
+        },
         "ModelDetail": {
             "type": "object",
             "properties": {
@@ -3325,91 +3593,6 @@
                 },
                 "options": {
                     "type": "object"
-                }
-            }
-        },
-        "ModelPatch": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "license": {
-                    "type": "string"
-                },
-                "tags": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "private": {
-                    "type": "boolean"
-                },
-                "source": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "categories": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "is_published": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "UserFollowingPost": {
-            "type": "object",
-            "properties": {
-                "toUser": {
-                    "type": "string"
-                }
-            }
-        },
-        "GlobalSearchResponse": {
-            "type": "object",
-            "properties": {
-                "results": {
-                    "type": "object",
-                    "properties": {
-                        "models": {
-                            "items": {
-                                "$ref": "#/definitions/ModelSearchList"
-                            },
-                            "type": "array"
-                        },
-                        "collections": {
-                            "items": {
-                                "$ref": "#/definitions/CollectionSearchList"
-                            },
-                            "type": "array"
-                        },
-                        "users": {
-                            "items": {
-                                "$ref": "#/definitions/UserSearchResponse"
-                            },
-                            "type": "array"
-                        }
-                    }
-                }
-            }
-        },
-        "CategoriesResponse": {
-            "type": "object",
-            "properties": {
-                "results": {
-                    "items": {
-                        "$ref": "#/definitions/CategoriesRelated"
-                    },
-                    "type": "array"
                 }
             }
         },
@@ -3664,34 +3847,6 @@
                 },
                 "label": {
                     "type": "string"
-                }
-            }
-        },
-        "CommentResponse": {
-            "type": "object",
-            "properties": {
-                "body": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string",
-                    "format": "date"
-                },
-                "uid": {
-                    "type": "string"
-                },
-                "updatedAt": {
-                    "type": "string",
-                    "format": "date"
-                },
-                "uri": {
-                    "type": "string"
-                },
-                "isDeleted": {
-                    "type": "boolean"
-                },
-                "user": {
-                    "$ref": "#/definitions/UserRelated"
                 }
             }
         }
