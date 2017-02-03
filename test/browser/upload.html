@@ -1,0 +1,85 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SketchfabDataApi</title>
+    <script src="../../dist/SketchfabDataApi.js"></script>
+</head>
+
+<body>
+<form action="">
+    <input type="file" name="model">
+    <input type="submit" value="Upload">
+</form>
+</body>
+<script>
+var api = new SketchfabDataApi();
+api.then( function ( client ) {
+
+    var Swagger = SketchfabDataApi.Swagger;
+    client.clientAuthorizations.add("Token",
+        new Swagger.ApiKeyAuthorization(
+            "Authorization",
+            "Token INSERT_YOU_TOKEN_HERE",
+            "header"
+        )
+    );
+
+    var form = document.querySelector('form');
+    var fileInput = document.querySelector('input[type="file"]');
+
+    form.addEventListener('submit', function(e){
+        e.preventDefault();
+
+        client.apis.models.post_v3_models( {
+            isPublished: 'false',
+            modelFile: fileInput.files[0]
+        } ).then( function( response ){
+
+            if (response.status === 201) {
+
+                console.log('After processing, model will be available at: ' + response.obj.uri);
+
+                // You can poll the processing status to know when the model is ready
+                // See how `pollStatus` is implemented below
+                var uid = response.obj.uid;
+                pollStatus( client, uid, function( err, res ){
+                    console.log( err, res );
+                } );
+
+            }
+
+        } ).catch( function( error ){
+            console.error( error );
+        } );
+
+    });
+
+} ).catch( function( error ) {
+    console.log( error );
+});
+
+/**
+ * Poll processing status
+ * @param {object} client Swagger client
+ * @param {string} uid Model uid
+ * @param {function} callback will receive (err, result)
+ */
+function pollStatus( client, uid, callback ) {
+    client.apis.models.get_v3_models_uid( {
+        uid: uid
+    } ).then( function( response ){
+        if ( response.obj.status.processing === 'SUCCEEDED' ) {
+            callback(null, response.obj.status);
+        } else if ( response.obj.status.processing === 'FAILED' ) {
+            callback( response.obj.status.processing, null );
+        } else {
+            setTimeout(function(){
+                console.log(response.obj.status);
+                pollStatus( client, uid, callback );
+            }, 1000);
+        }
+    } );
+}
+</script>
+</html>
