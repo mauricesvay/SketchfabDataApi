@@ -8,4 +8,6 @@ function SketchfabDataApi() {
     } );
 }
 
+SketchfabDataApi.Swagger = Swagger;
+
 module.exports = SketchfabDataApi;
